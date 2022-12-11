@@ -1,0 +1,3 @@
+[submodule "flip-jump"]
+	path = flip-jump
+	url = https://github.com/tomhea/flip-jump
