@@ -55,4 +55,4 @@ dkms.conf
 
 src/.idea/
 src/cmake-build-debug/
-gcc-arm-none-eabi.tar.xz
+*pyc
