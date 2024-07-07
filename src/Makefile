@@ -1,6 +1,5 @@
-GCC := arm-none-eabi-gcc
-LD := arm-none-eabi-ld
-GCC_OPTIONS := -march=armv7-a -marm -nostartfiles -specs=nano.specs
+GCC := riscv32-unknown-elf-gcc
+GCC_OPTIONS := -march=rv32im -mabi=ilp32 -specs=nosys.specs -nostartfiles
 LINKER_OPTIONS := -T linker_script.ld
 
 SOURCES := __init.c main.c

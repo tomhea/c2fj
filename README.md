@@ -1,2 +1,2 @@
 # c2fj
-compiling c to flipjump
+Compiling C --> RiscV --> Flipjump --> .fjm

@@ -1,0 +1,106 @@
+
+
+// ---------- Init:
+
+
+ns riscv {
+    def byte val {
+        ;(val > 0xff ? 0xff : (val < 0 ? 0 : val)) * dw
+    }
+    def byte {
+        .byte 0
+    }
+    ns byte {
+        def vec n, val {
+            rep(n, i) ..byte (value>>(8*i))&0xff
+        }
+    }
+
+    def init {
+        .regs.init
+        ._.structs_init
+        ._.functions_init
+    }
+
+
+    ns _ {
+        def structs_init {
+            // TODO init everything that's flipjumpy.
+            bit.ptr_init
+            bit.stack 10    // TODO why 10
+        }
+
+        def functions_init {
+            // TODO
+        }
+    }
+
+    ns regs {
+        def init {
+            .init_x0_to_x4
+            .init_x5_to_x7
+            .init_x8_to_x9
+            .init_x10_to_x17
+            .init_x18_to_x27
+            .init_x28_to_x31
+        }
+
+        def init_x0_to_x4 > x0, zero, x1, ra, x2, sp, x3, gp, x4, tp {
+            x0:  zero:      hex.vec 8
+            x1:  ra:        hex.vec 8
+            x2:  sp:        hex.vec 8
+            x3:  gp:        hex.vec 8
+            x4:  tp:        hex.vec 8
+        }
+
+        def init_x5_to_x7 > x5, t0, x6, t1, x7, t2 {
+            x5:  t0:        hex.vec 8
+            x6:  t1:        hex.vec 8
+            x7:  t2:        hex.vec 8
+        }
+
+        def init_x8_to_x9 > x8, s0, fp, x9 {
+            x8:  s0:  fp:   hex.vec 8
+            x9:  s1:        hex.vec 8
+        }
+
+        def init_x10_to_x17 > s1, x10, a0, x11, a1, x12, a2, x13, a3, x14, a4, x15, a5, x16, a6, x17, a7 {
+            x10: a0:        hex.vec 8
+            x11: a1:        hex.vec 8
+            x12: a2:        hex.vec 8
+            x13: a3:        hex.vec 8
+            x14: a4:        hex.vec 8
+            x15: a5:        hex.vec 8
+            x16: a6:        hex.vec 8
+            x17: a7:        hex.vec 8
+        }
+
+        def init_x18_to_x27 > x18, s2, x19, s3, x20, s4, x21, s5, x22, s6, x23, s7, x24, s8, x25, s9, x26, s10, x27, s11 {
+            x18: s2:        hex.vec 8
+            x19: s3:        hex.vec 8
+            x20: s4:        hex.vec 8
+            x21: s5:        hex.vec 8
+            x22: s6:        hex.vec 8
+            x23: s7:        hex.vec 8
+            x24: s8:        hex.vec 8
+            x25: s9:        hex.vec 8
+            x26: s10:       hex.vec 8
+            x27: s11:       hex.vec 8
+        }
+
+        def init_x28_to_x31 > x28, t3, x29, t4, x30, t5, x31, t6 {
+            x28: t3:        hex.vec 8
+            x29: t4:        hex.vec 8
+            x30: t5:        hex.vec 8
+            x31: t6:        hex.vec 8
+        }
+    }
+
+
+
+
+}
+
+
+
+// ---------- Jumps:  // TODO ?
