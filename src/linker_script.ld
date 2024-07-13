@@ -6,12 +6,15 @@ MEMORY
 
 STACK_SIZE = 0x2000;  #  TODO change?
 
+/* Entry point of the program */
+ENTRY(_start)
+
 /* Section Definitions */
 SECTIONS
 {
     .text :
     {
-        KEEP(*(.vectors .vectors.*))
+        _start = .;        /* Mark the start of the code section */
         *(.text.*)
         *(.rodata.*)
         _etext = .;

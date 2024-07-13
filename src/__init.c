@@ -23,77 +23,82 @@ extern uint32_t _estack;
 
 
 caddr_t _sbrk(int incr) {
-  static unsigned char *heap = NULL;
-  unsigned char *prev_heap;
+    static unsigned char *heap = NULL;
+    unsigned char *prev_heap;
 
-  if (heap == NULL) {
-    heap = (unsigned char *)&_end;
-  }
-  prev_heap = heap;
+    if (heap == NULL) {
+        heap = (unsigned char *) &_end;
+    }
+    prev_heap = heap;
 
-  heap += incr;
+    heap += incr;
 
-  return (caddr_t) prev_heap;
+    return (caddr_t) prev_heap;
 }
 
 int _close(int file) {
-  return -1;
+    return -1;
 }
 
 int _fstat(int file, struct stat *st) {
-  st->st_mode = S_IFCHR;
+    st->st_mode = S_IFCHR;
 
-  return 0;
+    return 0;
 }
 
 int _isatty(int file) {
-  return 1;
+    return 1;
 }
 
 int _lseek(int file, int ptr, int dir) {
-  return 0;
+    return 0;
 }
 
 void _exit(int status) {
-  __asm("BKPT #0"); // TODO
-  __builtin_unreachable();
+    // TODO print exit status.
+    asm volatile ("__exit_label: jal %0, __exit_label+10" ::"r"(status));
+    __builtin_unreachable();
 }
 
 void _kill(int pid, int sig) {
-  return;
+    return;
 }
 
 int _getpid(void) {
-  return -1;
-}
-
-int _write (int file, char * ptr, int len) {
-  if ((file != 1) && (file != 2) && (file != 3)) {
     return -1;
-  }
-
-  for (; len != 0; --len) {
-    // TODO: stl__put_char((uint8_t)*ptr);
-    ptr++;
-  }
-  return len;
 }
 
-int _read (int file, char * ptr, int len) {
-  if (file != 0) {
-    return -1;
-  }
+int _write(int file, char *ptr, int len) {
+    if ((file != 1) && (file != 2) && (file != 3)) {
+        return -1;
+    }
 
-  for (; len > 0; --len) {
-    // TODO: stl__read_char((uint8_t *)ptr);
-    ptr++;
-  }
-  return len;
+    char* end_ptr = ptr + len;
+    for (; ptr < end_ptr; ptr++) {
+        char char_to_print = *ptr;
+        asm volatile ("__write_label: jal %0, __write_label+2" ::"r"(char_to_print));
+        // TODO: stl__put_char((uint8_t)*ptr);
+    }
+    return len;
+}
+
+int _read(int file, char *ptr, int len) {
+    if (file != 0) {
+        return -1;
+    }
+
+    char* end_ptr = ptr + len;
+    for (; ptr < end_ptr; ptr++) {
+        char byte_was_read;
+        asm volatile ("__read_label: jal %0, __read_label+6" ::"r"(byte_was_read));
+        *ptr = byte_was_read;
+        // TODO: stl__read_char((uint8_t *)ptr);
+    }
+    return len;
 }
 
 
-void Reset_Handler(void)
-{
+void _start(void) {
     /* Copy init values from text to data */
     uint32_t *init_values_ptr = &_etext;
     uint32_t *data_ptr = &_sdata;
