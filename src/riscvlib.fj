@@ -4,6 +4,12 @@
 
 
 ns riscv {
+    MEM = 1<<(w-1)                      // start of memory
+    JMP = .MEM - (.MEM / 32)            // start of jump table
+    HLEN = 8
+    REGISTER_SIZE = .HLEN*dw
+
+
     def byte val {
         ;(val > 0xff ? 0xff : (val < 0 ? 0 : val)) * dw
     }
@@ -12,95 +18,299 @@ ns riscv {
     }
     ns byte {
         def vec n, val {
-            rep(n, i) ..byte (value>>(8*i))&0xff
+            rep(n, i) ..byte (val>>(8*i))&0xff
         }
     }
 
     def init {
         .regs.init
-        ._.structs_init
-        ._.functions_init
-    }
-
-
-    ns _ {
-        def structs_init {
-            // TODO init everything that's flipjumpy.
-            bit.ptr_init
-            bit.stack 10    // TODO why 10
-        }
-
-        def functions_init {
-            // TODO
-        }
     }
 
     ns regs {
-        def init {
+        def init > start {
+          start:
             .init_x0_to_x4
             .init_x5_to_x7
             .init_x8_to_x9
             .init_x10_to_x17
             .init_x18_to_x27
             .init_x28_to_x31
+            .init_pc
+        }
+        
+        def register {
+            hex.vec ..HLEN
         }
 
         def init_x0_to_x4 > x0, zero, x1, ra, x2, sp, x3, gp, x4, tp {
-            x0:  zero:      hex.vec 8
-            x1:  ra:        hex.vec 8
-            x2:  sp:        hex.vec 8
-            x3:  gp:        hex.vec 8
-            x4:  tp:        hex.vec 8
+          x0:
+          zero:
+            .register
+          x1:
+          ra:
+            .register
+          x2:
+          sp:
+            .register
+          x3:
+          gp:
+            .register
+          x4:
+          tp:
+            .register
         }
 
         def init_x5_to_x7 > x5, t0, x6, t1, x7, t2 {
-            x5:  t0:        hex.vec 8
-            x6:  t1:        hex.vec 8
-            x7:  t2:        hex.vec 8
+          x5:
+          t0:
+            .register
+          x6:
+          t1:
+            .register
+          x7:
+          t2:
+            .register
         }
 
-        def init_x8_to_x9 > x8, s0, fp, x9 {
-            x8:  s0:  fp:   hex.vec 8
-            x9:  s1:        hex.vec 8
+        def init_x8_to_x9 > x8, s0, fp, x9, s1 {
+          x8:
+          s0:
+          fp:
+            .register
+          x9:
+          s1:
+            .register
         }
 
-        def init_x10_to_x17 > s1, x10, a0, x11, a1, x12, a2, x13, a3, x14, a4, x15, a5, x16, a6, x17, a7 {
-            x10: a0:        hex.vec 8
-            x11: a1:        hex.vec 8
-            x12: a2:        hex.vec 8
-            x13: a3:        hex.vec 8
-            x14: a4:        hex.vec 8
-            x15: a5:        hex.vec 8
-            x16: a6:        hex.vec 8
-            x17: a7:        hex.vec 8
+        def init_x10_to_x17 > x10, a0, x11, a1, x12, a2, x13, a3, x14, a4, x15, a5, x16, a6, x17, a7 {
+          x10:
+          a0:
+            .register
+          x11:
+          a1:
+            .register
+          x12:
+          a2:
+            .register
+          x13:
+          a3:
+            .register
+          x14:
+          a4:
+            .register
+          x15:
+          a5:
+            .register
+          x16:
+          a6:
+            .register
+          x17:
+          a7:
+            .register
         }
 
         def init_x18_to_x27 > x18, s2, x19, s3, x20, s4, x21, s5, x22, s6, x23, s7, x24, s8, x25, s9, x26, s10, x27, s11 {
-            x18: s2:        hex.vec 8
-            x19: s3:        hex.vec 8
-            x20: s4:        hex.vec 8
-            x21: s5:        hex.vec 8
-            x22: s6:        hex.vec 8
-            x23: s7:        hex.vec 8
-            x24: s8:        hex.vec 8
-            x25: s9:        hex.vec 8
-            x26: s10:       hex.vec 8
-            x27: s11:       hex.vec 8
+          x18:
+          s2:
+            .register
+          x19:
+          s3:
+            .register
+          x20:
+          s4:
+            .register
+          x21:
+          s5:
+            .register
+          x22:
+          s6:
+            .register
+          x23:
+          s7:
+            .register
+          x24:
+          s8:
+            .register
+          x25:
+          s9:
+            .register
+          x26:
+          s10:
+            .register
+          x27:
+          s11:
+            .register
         }
 
         def init_x28_to_x31 > x28, t3, x29, t4, x30, t5, x31, t6 {
-            x28: t3:        hex.vec 8
-            x29: t4:        hex.vec 8
-            x30: t5:        hex.vec 8
-            x31: t6:        hex.vec 8
+          x28:
+          t3:
+            .register
+          x29:
+          t4:
+            .register
+          x30:
+          t5:
+            .register
+          x31:
+          t6:
+            .register
+        }
+
+        def init_pc > pc {
+          pc:
+            .register
         }
     }
 
 
+    ns syscall {
+        //  Time Complexity: 4@+268
+        // Space Complexity: 6@+364
+        //    prints the exit code (stored at src_register), then finishes.
+        def exit src_register_index < riscv.regs.start {
+            stl.output "Program exited with exit code "
+            hex.print_uint 2, riscv.regs.start + ..REGISTER_SIZE*src_register_index, 1, 1
+            stl.output ".\n"
+            stl.loop
+        }
 
+        //  Time Complexity: 2@
+        // Space Complexity: 2@+52
+        //   output the least-significant byte of src_register.
+        def write_byte src_register_index < riscv.regs.start {
+            hex.print riscv.regs.start + ..REGISTER_SIZE * src_register_index
+        }
+
+        //  Time Complexity: 10@+14
+        // Space Complexity: 10@+108
+        //   dst_register = input(8bits)
+        def read_byte dst_register_index < riscv.regs.start {
+            hex.zero 6, riscv.regs.start + ..REGISTER_SIZE * dst_register_index + 2*dw
+            hex.input riscv.regs.start + ..REGISTER_SIZE * dst_register_index
+        }
+
+    }
+
+
+    def start entry_point {
+        stl.startup_and_init_all            // inits everything flipjump needs
+        ;entry_point                        // start executing riscv opcodes
+        .init                               // inits registers
+    }
+
+
+    def inc_pc current_address {
+        .__xor_pc_value_by_const current_address ^ (current_address + 4)
+    }
+    def __xor_pc_value_by_const constant < .regs.pc {
+        rep(.HLEN, i) .__xor_by_hex_const .regs.pc + i*dw, (constant >> (i*4)) & 0xf
+    }
+    def __xor_by_hex_const dst, constant {
+        rep(constant != 0, _) stl.wflip_macro dst + dw, constant * dw
+    }
+
+    def set_register_value register_index, constant < .regs.start {
+        rep(register_index != 0, _) hex.set .HLEN, riscv.regs.start + .REGISTER_SIZE * register_index, constant
+    }
+
+    def jump_to_constant_address current_address, new_address {
+        .__xor_pc_value_by_const current_address ^ new_address
+        ;.JMP + new_address/4*dw
+    }
+
+    def jump_to_pc @ ptr < .regs.pc {
+        hex.zero w/4, ptr
+        hex.xor .HLEN, ptr, .regs.pc
+        rep(#w-2, _) hex.shl_bit w/4, ptr
+        hex.add_constant w/4, ptr, .JMP
+
+        hex.ptr_jump ptr
+
+      ptr:
+        hex.vec w/4
+    }
 
 }
 
 
 
-// ---------- Jumps:  // TODO ?
+// ---------- opcodes
+
+ns riscv {
+    def jal rd_index, imm, current_address {
+        .set_register_value rd_index, current_address + 4
+        .jump_to_constant_address current_address, current_address + imm
+    }
+
+    def jalr rd_index, rs1, imm, current_address < .regs.pc {
+        .set_register_value rd_index, current_address + 4
+        hex.mov .HLEN, .regs.pc, rs1
+        rep(imm!=0,_) hex.add_constant .HLEN, .regs.pc, imm % (1<<(4*.HLEN))
+        .jump_to_pc
+    }
+
+    def lui rd_index, imm {
+        .set_register_value rd_index, imm
+    }
+
+    def auipc rd_index, imm, addr {
+        .set_register_value rd_index, imm + addr
+    }
+
+    def beq rs1, rs2, imm, addr @ take_jump, dont_jump {
+        hex.cmp .HLEN, rs1, rs2, dont_jump, take_jump, dont_jump
+      take_jump:
+        .jump_to_constant_address addr, imm + addr
+      dont_jump:
+        .inc_pc addr
+    }
+
+    def bne rs1, rs2, imm, addr @ take_jump, dont_jump {
+        hex.cmp .HLEN, rs1, rs2, take_jump, dont_jump, take_jump
+      take_jump:
+        .jump_to_constant_address addr, imm + addr
+      dont_jump:
+        .inc_pc addr
+    }
+
+    def bltu rs1, rs2, imm, addr @ take_jump, dont_jump {
+        hex.cmp .HLEN, rs1, rs2, take_jump, dont_jump, dont_jump
+      take_jump:
+        .jump_to_constant_address addr, imm + addr
+      dont_jump:
+        .inc_pc addr
+    }
+
+    def bgeu rs1, rs2, imm, addr @ take_jump, dont_jump {
+        hex.cmp .HLEN, rs1, rs2, dont_jump, dont_jump, take_jump
+      take_jump:
+        .jump_to_constant_address addr, imm + addr
+      dont_jump:
+        .inc_pc addr
+    }
+
+    def blt rs1, rs2, imm, addr @ take_jump, result, dont_jump {
+        hex.mov .HLEN, result, rs1
+        hex.sub .HLEN, result, rs2
+        hex.sign .HLEN, result, take_jump, dont_jump
+      take_jump:
+        .jump_to_constant_address addr, imm + addr
+      result:
+        .regs.register
+      dont_jump:
+        .inc_pc addr
+    }
+
+    def bge rs1, rs2, imm, addr @ take_jump, result, dont_jump {
+        hex.mov .HLEN, result, rs1
+        hex.sub .HLEN, result, rs2
+        hex.sign .HLEN, result, dont_jump, take_jump
+      take_jump:
+        .jump_to_constant_address addr, imm + addr
+      result:
+        .regs.register
+      dont_jump:
+        .inc_pc addr
+    }
+}

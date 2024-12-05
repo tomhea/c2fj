@@ -56,3 +56,4 @@ dkms.conf
 src/.idea/
 src/cmake-build-debug/
 *pyc
+build/
