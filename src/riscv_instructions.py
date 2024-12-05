@@ -14,17 +14,26 @@ RV_BGE = 0b101
 RV_BLTU = 0b110
 RV_BGEU = 0b111
 
-RV_L = 0b0000011
+RV_L = 0b0000011  # TODO implement
 RV_LB = 0b000
 RV_LH = 0b001
 RV_LW = 0b010
 RV_LBU = 0b100
 RV_LHU = 0b101
 
-RV_S = 0b0100011
+RV_S = 0b0100011  # TODO implement
 RV_SB = 0b000
 RV_SH = 0b001
 RV_SW = 0b010
+
+RV_ALU_IMM = 0b0010011  # TODO 9 ALU ops with immediate
+
+RV_ALU = 0b0110011  # TODO 10 ALU ops
+
+RV_FENCE = 0b000111  # TODO implement. Single op in ISA.
+
+RB_CALL = 0b1110011  # TODO implement. ECALL is I=0, EBREAK is I=1 (everything else is 0)
+
 
 _WRITE_IMMEDIATE = 2
 _READ_IMMEDIATE = 6
