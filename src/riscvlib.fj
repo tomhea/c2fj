@@ -6,8 +6,9 @@
 ns riscv {
     MEM = 1<<(w-1)                      // start of memory
     JMP = .MEM - (.MEM / 32)            // start of jump table
-    HLEN = 8
-    REGISTER_SIZE = .HLEN*dw
+    BLEN = 4                            // register size in byte-variables
+    HLEN = .BLEN * 2                    // register size in hex-variables
+    REGISTER_SIZE = .HLEN*dw            // register-variable size in memory bits
 
 
     def byte val {
@@ -186,7 +187,7 @@ ns riscv {
         // Space Complexity: 10@+108
         //   dst_register = input(8bits)
         def read_byte dst_register_index < riscv.regs.start {
-            hex.zero 6, riscv.regs.start + ..REGISTER_SIZE * dst_register_index + 2*dw
+            hex.zero ..HLEN-2, riscv.regs.start + ..REGISTER_SIZE * dst_register_index + 2*dw
             hex.input riscv.regs.start + ..REGISTER_SIZE * dst_register_index
         }
 
@@ -312,5 +313,42 @@ ns riscv {
         .regs.register
       dont_jump:
         .inc_pc addr
+    }
+
+
+    def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, mem_ptr, end {
+        hex.mov .HLEN, mem_ptr, rs1
+        hex.add_constant .HLEN, mem_ptr, .MEM + imm
+
+        hex.read_byte num_of_bytes, rd, mem_ptr
+        stl.comp_if1 num_of_bytes == .BLEN, end
+
+        hex.zero .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
+        stl.comp_if0 sign_extension, end
+        hex.sign 2*num_of_bytes, rd, negative_extension, end
+      negative_extension:
+        hex.not .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
+
+      mem_ptr:
+        .regs.register
+      end:
+    }
+
+    def lb rd, rs1, imm {
+        .load_op 1, 1, rd, rs1, imm
+    }
+    def lbu rd, rs1, imm {
+        .load_op 1, 0, rd, rs1, imm
+    }
+
+    def lh rd, rs1, imm {
+        .load_op 2, 1, rd, rs1, imm
+    }
+    def lhu rd, rs1, imm {
+        .load_op 2, 0, rd, rs1, imm
+    }
+
+    def lw rd, rs1, imm {
+        .load_op 4, 0, rd, rs1, imm
     }
 }
