@@ -317,8 +317,12 @@ ns riscv {
 
 
     def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, mem_ptr, end {
-        hex.mov .HLEN, mem_ptr, rs1
-        hex.add_constant .HLEN, mem_ptr, .MEM + imm
+        hex.zero w/4, mem_ptr
+        hex.xor .HLEN, mem_ptr, rs1
+        hex.add_constant w/4, mem_ptr, imm
+
+        rep(#w, _) hex.shl_bit w/4, mem_ptr
+        hex.add_constant w/4, mem_ptr, .MEM
 
         hex.read_byte num_of_bytes, rd, mem_ptr
         stl.comp_if1 num_of_bytes == .BLEN, end
@@ -330,7 +334,7 @@ ns riscv {
         hex.not .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
 
       mem_ptr:
-        .regs.register
+        hex.vec w/4
       end:
     }
 

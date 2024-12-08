@@ -30,10 +30,11 @@ def compile_fj_to_fjm() -> None:
 
 
 def run_fjm() -> None:
-    flipjump.run(
+    flipjump.debug(
         fjm_path=BUILD_DIR / 'main.fjm',
         debugging_file=BUILD_DIR / 'debug.fjd',
         last_ops_debugging_list_length=3000,
+        # breakpoints={"riscv.ADDR_00000014"},
     )
 
 
