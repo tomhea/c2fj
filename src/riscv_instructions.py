@@ -21,7 +21,7 @@ RV_LW = 0b010
 RV_LBU = 0b100
 RV_LHU = 0b101
 
-RV_S = 0b0100011  # TODO implement
+RV_S = 0b0100011
 RV_SB = 0b000
 RV_SH = 0b001
 RV_SW = 0b010
@@ -99,8 +99,11 @@ def s_type(macro_name: str, op: int) -> str:
     imm4_0 = (op >> 7) & 0x1f
     imm = (imm11_5 << 5) | (imm4_0 << 0)
     imm = sign_extend(imm, 12)
-    return f'    .{macro_name} {register_name(op >> 15)}, {register_name(op >> 20)}, {fj_hex(imm)}' \
-           f'\t\t{get_hex_comment(op)}\n'
+
+    rs1 = (op >> 15) & 0x1f
+    rs2 = (op >> 20) & 0x1f
+
+    return f'    .{macro_name} {register_name(rs1)}, {register_name(rs2)}, {fj_hex(imm)}\n'
 
 
 def b_type(macro_name: str, op: int, addr: int) -> str:
@@ -212,6 +215,14 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(i_type('lbu', full_op))
         elif funct3 == RV_LHU:
             ops_file.write(i_type('lhu', full_op))
+
+    elif opcode == RV_S:
+        if funct3 == RV_SB:
+            ops_file.write(s_type('sb', full_op))
+        elif funct3 == RV_SH:
+            ops_file.write(s_type('sh', full_op))
+        elif funct3 == RV_SW:
+            ops_file.write(s_type('sw', full_op))
 
     else:
         ops_file.write(f'    // TODO not-implemented op 0x{full_op:08x}\n')

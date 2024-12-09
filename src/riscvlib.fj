@@ -257,6 +257,7 @@ ns riscv {
 
       .fast_jump_to_pc
       .fast_read_memory
+      .fast_write_memory
     }
 
     def fast_jump_to_pc > jump_to_pc {
@@ -287,6 +288,32 @@ ns riscv {
         stl.fret .ret
       read4:
         hex.read_byte 4, .mem_data, .mem_ptr
+        stl.fret .ret
+    }
+
+    // Writes .mem_op_byte_length bytes from .mem_data to the memory, starting from the .mem_ptr'th byte.
+    // Notes:
+    //  - Assumes mem_op_byte_length is one of {1,2,4}.
+    //  - Assumes the value in mem_ptr is the non-fj address (i.e 32 for the 32'th byte, not 0x8000000000001000).
+    //  - Alters the value of .mem_ptr; expects return address in .ret.
+    def fast_write_memory @ two, write1, write2, write4 < .ret, .mem_ptr, .mem_data, .mem_op_byte_length > write_memory {
+      write_memory:
+        rep(#w, _) hex.shl_bit w/4, .mem_ptr
+        hex.add_constant w/4, .mem_ptr, .MEM
+
+        hex.cmp .mem_op_byte_length, two, write1, write2, write4
+
+      two:
+        hex.hex 2
+
+      write1:
+        hex.write_byte .mem_ptr, .mem_data
+        stl.fret .ret
+      write2:
+        hex.write_byte 2, .mem_ptr, .mem_data
+        stl.fret .ret
+      write4:
+        hex.write_byte 4, .mem_ptr, .mem_data
         stl.fret .ret
     }
 }
@@ -373,11 +400,15 @@ ns riscv {
     }
 
 
-    def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, end \
-            < .mem_ptr, .mem_data, .ret, .mem_op_byte_length, .read_memory {
+    def lea_to_mem_ptr rs1, imm < .mem_ptr {
         hex.zero w/4, .mem_ptr
         hex.xor .HLEN, .mem_ptr, rs1
         hex.add_constant w/4, .mem_ptr, imm
+    }
+
+    def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, end \
+            < .mem_data, .ret, .mem_op_byte_length, .read_memory {
+        .lea_to_mem_ptr rs1, imm
 
         hex.set .mem_op_byte_length, num_of_bytes
         stl.fcall .read_memory, .ret
@@ -409,5 +440,26 @@ ns riscv {
 
     def lw rd, rs1, imm {
         .load_op 4, 0, rd, rs1, imm
+    }
+
+
+    def store_op num_of_bytes, rs1, rs2, imm \
+            < .mem_data, .ret, .mem_op_byte_length, .write_memory {
+        .lea_to_mem_ptr rs1, imm
+
+        hex.mov 2*num_of_bytes, .mem_data, rs2
+        hex.set .mem_op_byte_length, num_of_bytes
+
+        stl.fcall .write_memory, .ret
+    }
+
+    def sb rs1, rs2, imm {
+        .store_op 1, rs1, rs2, imm
+    }
+    def sh rs1, rs2, imm {
+        .store_op 2, rs1, rs2, imm
+    }
+    def sw rs1, rs2, imm {
+        .store_op 4, rs1, rs2, imm
     }
 }
