@@ -26,9 +26,25 @@ RV_SB = 0b000
 RV_SH = 0b001
 RV_SW = 0b010
 
-RV_ALU_IMM = 0b0010011  # TODO 9 ALU ops with immediate
+RV_ALU_IMM = 0b0010011
+RV_ADDI = 0b000
+RV_SLTI = 0b010
+RV_SLTIU = 0b011
+RV_XORI = 0b100
+RV_ORI = 0b110
+RV_ANDI = 0b111
+RV_SLLI = 0b001
+RV_SRI = 0b101
+RV_SLLI_FUNCT7 = 0b0000000
+RV_SRLI_FUNCT7 = 0b0000000
+RV_SRAI_FUNCT7 = 0b0100000
+
 
 RV_ALU = 0b0110011  # TODO 10 ALU ops
+RV_ADD_SUB = 0b000
+RV_ADD_FUNCT7 = 0b0000000
+RV_SUB_FUNCT7 = 0b0100000
+
 
 RV_FENCE = 0b000111  # TODO implement. Single op in ISA.
 
@@ -43,8 +59,8 @@ _EXIT_IMMEDIATE = 10
 global pc_changed
 
 
-def invalid_exception(op: int) -> str:
-    return ''  # TODO
+class InvalidOpcode(ValueError):
+    pass
 
 
 def sign_extend(constant: int, bit_width: int) -> int:
@@ -71,8 +87,11 @@ def get_hex_comment(op: int) -> str:
 
 
 def r_type(macro_name: str, op: int) -> str:
-    return f'    .{macro_name} {register_name(op >> 7)}, {register_name(op >> 15)}, {register_name(op >> 20)}'\
-           f'\t\t{get_hex_comment(op)}\n'
+    rd = (op >> 7) & 0x1f
+    rs1 = (op >> 15) & 0x1f
+    rs2 = (op >> 20) & 0x1f
+
+    return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {register_name(rs2)}\n'
 
 
 def i_type(macro_name: str, op: int) -> str:
@@ -81,6 +100,14 @@ def i_type(macro_name: str, op: int) -> str:
     rd = (op >> 7) & 0x1f
 
     return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {fj_hex(imm)}\n'
+
+
+def shift_imm_op(macro_name: str, op: int) -> str:
+    shift_const = (op >> 20) & 0x1f
+    rs1 = (op >> 15) & 0x1f
+    rd = (op >> 7) & 0x1f
+
+    return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {fj_hex(shift_const)}\n'
 
 
 def jalr_op(op: int, addr: int) -> str:
@@ -160,7 +187,7 @@ def j_type(macro_name: str, op: int, addr: int) -> str:
             pc_changed = True
             return f'    .syscall.exit {rd}\n'
         else:
-            return invalid_exception(op)
+            raise InvalidOpcode(f"Bad imm offset in j-type op: 0x{op:08x} (address 0x{addr:08x}).")
 
     pc_changed = True
     return f'    .{macro_name} {rd}, {fj_hex(imm)}, {addr}\n'
@@ -186,7 +213,7 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
         ops_file.write(j_type('jal', full_op, addr))
     elif opcode == RV_JALR:
         if funct3 != 0:
-            ops_file.write(f'    // ERROR - bad funct3 at jalr op - 0x{full_op:08x}\n')
+            raise InvalidOpcode(f"bad funct3 at jalr op: 0x{full_op:08x} (address 0x{addr:08x}).")
         else:
             ops_file.write(jalr_op(full_op, addr))
 
@@ -203,6 +230,8 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(b_type('bltu', full_op, addr))
         elif funct3 == RV_BGEU:
             ops_file.write(b_type('bgeu', full_op, addr))
+        else:
+            raise InvalidOpcode(f"bad funct3 at branch op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
     elif opcode == RV_L:
         if funct3 == RV_LB:
@@ -215,6 +244,8 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(i_type('lbu', full_op))
         elif funct3 == RV_LHU:
             ops_file.write(i_type('lhu', full_op))
+        else:
+            raise InvalidOpcode(f"bad funct3 at load op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
     elif opcode == RV_S:
         if funct3 == RV_SB:
@@ -223,10 +254,41 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(s_type('sh', full_op))
         elif funct3 == RV_SW:
             ops_file.write(s_type('sw', full_op))
+        else:
+            raise InvalidOpcode(f"bad funct3 at store op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+    elif opcode == RV_ALU_IMM:
+        if funct3 == RV_ADDI:
+            ops_file.write(i_type('addi', full_op))
+        elif funct3 == RV_SLTI:
+            ops_file.write(i_type('slti', full_op))
+        elif funct3 == RV_SLTIU:
+            ops_file.write(i_type('sltiu', full_op))
+        elif funct3 == RV_XORI:
+            ops_file.write(i_type('xori', full_op))
+        elif funct3 == RV_ORI:
+            ops_file.write(i_type('ori', full_op))
+        elif funct3 == RV_ANDI:
+            ops_file.write(i_type('andi', full_op))
+        elif funct3 == RV_SLLI and funct7 == RV_SLLI_FUNCT7:
+            ops_file.write(shift_imm_op('slli', full_op))
+        elif funct3 == RV_SRI and funct7 == RV_SRLI_FUNCT7:
+            ops_file.write(shift_imm_op('srli', full_op))
+        elif funct3 == RV_SRI and funct7 == RV_SRAI_FUNCT7:
+            ops_file.write(shift_imm_op('srai', full_op))
+        else:
+            raise InvalidOpcode(f"bad funct3/funct7 at alu_imm op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+    elif opcode == RV_ALU:
+        if funct3 == RV_ADD_SUB and funct7 == RV_ADD_FUNCT7:
+            ops_file.write(r_type('add', full_op))
+        elif funct3 == RV_ADD_SUB and funct7 == RV_SUB_FUNCT7:
+            ops_file.write(r_type('sub', full_op))
+        else:
+            raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
     else:
-        ops_file.write(f'    // TODO not-implemented op 0x{full_op:08x}\n')
-        # TODO real ops here.
+        raise InvalidOpcode(f"invalid op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
     if not pc_changed:
         ops_file.write(f'    .inc_pc 0x{addr:08x}\n')

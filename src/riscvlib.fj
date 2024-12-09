@@ -462,4 +462,99 @@ ns riscv {
     def sw rs1, rs2, imm {
         .store_op 4, rs1, rs2, imm
     }
+
+
+    def addi rd, rs1, imm {
+        hex.set .HLEN, rd, imm
+        hex.add .HLEN, rd, rs1
+    }
+
+    // Sets rd to 1 if [signed] rs1<imm (imm-1-rs1>=0), else to 0.
+    def slti rd, rs1, imm @ write1, temp_reg, end {
+        hex.set .HLEN, temp_reg, imm-1
+        hex.sub .HLEN, temp_reg, rs1
+
+        hex.zero .HLEN, rd
+        hex.sign .HLEN, temp_reg, end, write1
+
+      temp_reg:
+        .regs.register
+
+      write1:
+        rd+dbit;end
+
+      end:
+    }
+    // Sets rd to 1 if [unsigned] rs1<imm (imm-1-rs1>=0), else to 0.
+    def sltiu rd, rs1, imm @ write1, imm_var, end {
+        hex.set .HLEN, imm_var, imm
+
+        hex.zero .HLEN, rd
+        hex.cmp .HLEN, rs1, imm_var, end, write1, write1
+
+      imm_var:
+        .regs.register
+
+      write1:
+        rd+dbit;end
+
+      end:
+    }
+
+    def xori rd, rs1, imm {
+        hex.set .HLEN, rd, imm
+        hex.xor .HLEN, rd, rs1
+    }
+    def ori rd, rs1, imm {
+        hex.set .HLEN, rd, imm
+        hex.or .HLEN, rd, rs1
+    }
+    def andi rd, rs1, imm {
+        hex.set .HLEN, rd, imm
+        hex.and .HLEN, rd, rs1
+    }
+
+    def slli rd, rs1, shift_const @ bit_reg, end {
+        stl.hex2bit .HLEN, bit_reg, rs1
+        bit.shl 4*.HLEN, shift_const, bit_reg
+        stl.bit2hex 4*.HLEN, rd, bit_reg
+        ;end
+
+      bit_reg:
+        bit.vec 4*.HLEN
+
+      end:
+    }
+    def srli rd, rs1, shift_const @ bit_reg, end {
+        stl.hex2bit .HLEN, bit_reg, rs1
+        bit.shr 4*.HLEN, shift_const, bit_reg
+        stl.bit2hex 4*.HLEN, rd, bit_reg
+        ;end
+
+      bit_reg:
+        bit.vec 4*.HLEN
+
+      end:
+    }
+    def srai rd, rs1, shift_const @ bit_reg, end {
+        stl.hex2bit .HLEN, bit_reg, rs1
+        bit.shra 4*.HLEN, shift_const, bit_reg
+        stl.bit2hex 4*.HLEN, rd, bit_reg
+        ;end
+
+      bit_reg:
+        bit.vec 4*.HLEN
+
+      end:
+    }
+
+
+    def add rd, rs1, rs2 {
+        hex.mov .HLEN, rd, rs1
+        hex.add .HLEN, rd, rs2
+    }
+    def sub rd, rs1, rs2 {
+        hex.mov .HLEN, rd, rs1
+        hex.sub .HLEN, rd, rs2
+    }
 }
