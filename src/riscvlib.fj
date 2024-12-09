@@ -25,6 +25,7 @@ ns riscv {
 
     def init {
         .regs.init
+        .fast_macros
     }
 
     ns regs {
@@ -235,6 +236,21 @@ ns riscv {
 }
 
 
+// Fast calls:
+
+
+ns riscv {
+    def fast_macros > ret, jump_to_pc {
+      ret:
+        ;0
+
+      jump_to_pc:
+        .jump_to_pc
+        stl.fret .ret
+    }
+}
+
+
 
 // ---------- opcodes
 
@@ -244,11 +260,11 @@ ns riscv {
         .jump_to_constant_address current_address, current_address + imm
     }
 
-    def jalr rd_index, rs1, imm, current_address < .regs.pc {
+    def jalr rd_index, rs1, imm, current_address < .regs.pc, .ret, .jump_to_pc {
         .set_register_value rd_index, current_address + 4
         hex.mov .HLEN, .regs.pc, rs1
         rep(imm!=0,_) hex.add_constant .HLEN, .regs.pc, imm % (1<<(4*.HLEN))
-        .jump_to_pc
+        stl.fcall .jump_to_pc, .ret
     }
 
     def lui rd_index, imm {
@@ -330,11 +346,12 @@ ns riscv {
         hex.zero .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
         stl.comp_if0 sign_extension, end
         hex.sign 2*num_of_bytes, rd, negative_extension, end
-      negative_extension:
-        hex.not .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
 
       mem_ptr:
         hex.vec w/4
+
+      negative_extension:
+        hex.not .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
       end:
     }
 

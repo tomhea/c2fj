@@ -26,6 +26,7 @@ def compile_fj_to_fjm() -> None:
         output_fjm_path=BUILD_DIR / 'main.fjm',
         warning_as_errors=False,
         debugging_file_path=BUILD_DIR / 'debug.fjd',
+        show_statistics=False,
     )
 
 
