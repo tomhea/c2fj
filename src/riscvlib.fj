@@ -240,12 +240,53 @@ ns riscv {
 
 
 ns riscv {
-    def fast_macros > ret, jump_to_pc {
+    // Initialize the opcode implementation stubs, to be jumped into by some of the riscv op macros.
+    def fast_macros > ret, mem_ptr, mem_data, mem_op_byte_length {
       ret:
         ;0
 
+      mem_ptr:
+        hex.vec w/4
+
+      mem_data:
+        .regs.register
+
+      mem_op_byte_length:
+        hex.hex
+
+
+      .fast_jump_to_pc
+      .fast_read_memory
+    }
+
+    def fast_jump_to_pc > jump_to_pc {
       jump_to_pc:
         .jump_to_pc
+    }
+
+    // Read .mem_op_byte_length bytes, starting from the .mem_ptr'th byte. Stores the result in .mem_data.
+    // Notes:
+    //  - Assumes mem_op_byte_length is one of {1,2,4}.
+    //  - Assumes the value in mem_ptr is the non-fj address (i.e 32 for the 32'th byte, not 0x8000000000001000).
+    //  - Alters the value of .mem_ptr; expects return address in .ret.
+    def fast_read_memory @ two, read1, read2, read4 < .ret, .mem_ptr, .mem_data, .mem_op_byte_length > read_memory {
+      read_memory:
+        rep(#w, _) hex.shl_bit w/4, .mem_ptr
+        hex.add_constant w/4, .mem_ptr, .MEM
+
+        hex.cmp .mem_op_byte_length, two, read1, read2, read4
+
+      two:
+        hex.hex 2
+
+      read1:
+        hex.read_byte .mem_data, .mem_ptr
+        stl.fret .ret
+      read2:
+        hex.read_byte 2, .mem_data, .mem_ptr
+        stl.fret .ret
+      read4:
+        hex.read_byte 4, .mem_data, .mem_ptr
         stl.fret .ret
     }
 }
@@ -260,11 +301,11 @@ ns riscv {
         .jump_to_constant_address current_address, current_address + imm
     }
 
-    def jalr rd_index, rs1, imm, current_address < .regs.pc, .ret, .jump_to_pc {
+    def jalr rd_index, rs1, imm, current_address < .regs.pc, .jump_to_pc {
         .set_register_value rd_index, current_address + 4
         hex.mov .HLEN, .regs.pc, rs1
         rep(imm!=0,_) hex.add_constant .HLEN, .regs.pc, imm % (1<<(4*.HLEN))
-        stl.fcall .jump_to_pc, .ret
+        ;.jump_to_pc
     }
 
     def lui rd_index, imm {
@@ -332,23 +373,20 @@ ns riscv {
     }
 
 
-    def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, mem_ptr, end {
-        hex.zero w/4, mem_ptr
-        hex.xor .HLEN, mem_ptr, rs1
-        hex.add_constant w/4, mem_ptr, imm
+    def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, end \
+            < .mem_ptr, .mem_data, .ret, .mem_op_byte_length, .read_memory {
+        hex.zero w/4, .mem_ptr
+        hex.xor .HLEN, .mem_ptr, rs1
+        hex.add_constant w/4, .mem_ptr, imm
 
-        rep(#w, _) hex.shl_bit w/4, mem_ptr
-        hex.add_constant w/4, mem_ptr, .MEM
+        hex.set .mem_op_byte_length, num_of_bytes
+        stl.fcall .read_memory, .ret
 
-        hex.read_byte num_of_bytes, rd, mem_ptr
-        stl.comp_if1 num_of_bytes == .BLEN, end
+        hex.zero .HLEN, rd
+        hex.xor 2*num_of_bytes, rd, .mem_data
 
-        hex.zero .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
         stl.comp_if0 sign_extension, end
         hex.sign 2*num_of_bytes, rd, negative_extension, end
-
-      mem_ptr:
-        hex.vec w/4
 
       negative_extension:
         hex.not .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
