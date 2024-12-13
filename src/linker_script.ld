@@ -39,7 +39,9 @@ SECTIONS
     .stack (NOLOAD):
     {
         . = ALIGN(8);
+        _stack = .;
         . = . + STACK_SIZE;
+        _stack_end = .;
         . = ALIGN(8);
     } > ram
 

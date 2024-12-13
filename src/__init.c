@@ -98,7 +98,7 @@ int _read(int file, char *ptr, int len) {
 }
 
 
-void _start(void) {
+void start(void) {
     /* Copy init values from text to data */
     uint32_t *init_values_ptr = &_etext;
     uint32_t *data_ptr = &_sdata;
