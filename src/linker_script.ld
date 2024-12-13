@@ -14,7 +14,6 @@ SECTIONS
 {
     .text :
     {
-        _start = .;        /* Mark the start of the code section */
         *(.text.*)
         *(.rodata.*)
         _etext = .;
