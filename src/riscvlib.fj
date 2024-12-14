@@ -329,8 +329,8 @@ ns riscv {
     }
 
     def jalr rd_index, rs1, imm, current_address < .regs.pc, .jump_to_pc {
-        .set_register_value rd_index, current_address + 4
         hex.mov .HLEN, .regs.pc, rs1
+        .set_register_value rd_index, current_address + 4
         rep(imm!=0,_) hex.add_constant .HLEN, .regs.pc, imm % (1<<(4*.HLEN))
         ;.jump_to_pc
     }
@@ -403,7 +403,7 @@ ns riscv {
     def lea_to_mem_ptr rs1, imm < .mem_ptr {
         hex.zero w/4, .mem_ptr
         hex.xor .HLEN, .mem_ptr, rs1
-        hex.add_constant w/4, .mem_ptr, imm
+        hex.add_constant .HLEN, .mem_ptr, imm % (1<<(4*.HLEN))
     }
 
     def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, end \
@@ -464,9 +464,15 @@ ns riscv {
     }
 
 
-    def addi rd, rs1, imm {
-        hex.set .HLEN, rd, imm
-        hex.add .HLEN, rd, rs1
+    def addi rd, rs1, imm @ imm_var, end {
+        hex.mov .HLEN, rd, rs1
+        hex.add .HLEN, rd, imm_var
+        ;end
+
+      imm_var:
+        hex.vec .HLEN, imm
+
+      end:
     }
 
     // Sets rd to 1 if [signed] rs1<imm (imm-1-rs1>=0), else to 0.
@@ -486,32 +492,54 @@ ns riscv {
       end:
     }
     // Sets rd to 1 if [unsigned] rs1<imm (imm-1-rs1>=0), else to 0.
-    def sltiu rd, rs1, imm @ write1, imm_var, end {
+    def sltiu rd, rs1, imm @ write0, write1, imm_var, end {
         hex.set .HLEN, imm_var, imm
 
-        hex.zero .HLEN, rd
-        hex.cmp .HLEN, rs1, imm_var, end, write1, write1
+        hex.cmp .HLEN, rs1, imm_var, write0, write1, write1
 
       imm_var:
         .regs.register
 
+      write0:
+        hex.set rd, 0
+        ;end
       write1:
-        rd+dbit;end
+        hex.set rd, 1
+        ;end
+
+      end:
+        hex.zero .HLEN-1, rd+dw
+    }
+
+    def xori rd, rs1, imm  @ imm_var, end {
+        hex.mov .HLEN, rd, rs1
+        hex.xor .HLEN, rd, imm_var
+        ;end
+
+      imm_var:
+        hex.vec .HLEN, imm
 
       end:
     }
+    def ori rd, rs1, imm  @ imm_var, end {
+        hex.mov .HLEN, rd, rs1
+        hex.or .HLEN, rd, imm_var
+        ;end
 
-    def xori rd, rs1, imm {
-        hex.set .HLEN, rd, imm
-        hex.xor .HLEN, rd, rs1
+      imm_var:
+        hex.vec .HLEN, imm
+
+      end:
     }
-    def ori rd, rs1, imm {
-        hex.set .HLEN, rd, imm
-        hex.or .HLEN, rd, rs1
-    }
-    def andi rd, rs1, imm {
-        hex.set .HLEN, rd, imm
-        hex.and .HLEN, rd, rs1
+    def andi rd, rs1, imm  @ imm_var, end {
+        hex.mov .HLEN, rd, rs1
+        hex.and .HLEN, rd, imm_var
+        ;end
+
+      imm_var:
+        hex.vec .HLEN, imm
+
+      end:
     }
 
     def slli rd, rs1, shift_const @ bit_reg, end {
@@ -549,12 +577,26 @@ ns riscv {
     }
 
 
-    def add rd, rs1, rs2 {
-        hex.mov .HLEN, rd, rs1
-        hex.add .HLEN, rd, rs2
+    def add rd, rs1, rs2 @ result, end {
+        hex.mov .HLEN, result, rs1
+        hex.add .HLEN, result, rs2
+        hex.mov .HLEN, rd, result
+        ;end
+
+      result:
+        .regs.register
+
+      end:
     }
-    def sub rd, rs1, rs2 {
-        hex.mov .HLEN, rd, rs1
-        hex.sub .HLEN, rd, rs2
+    def sub rd, rs1, rs2 @ result, end {
+        hex.mov .HLEN, result, rs1
+        hex.sub .HLEN, result, rs2
+        hex.mov .HLEN, rd, result
+        ;end
+
+      result:
+        .regs.register
+
+      end:
     }
 }
