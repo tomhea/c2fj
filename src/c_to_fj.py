@@ -1,5 +1,8 @@
 from pathlib import Path
 import os
+
+from flipjump.utils.classes import PrintTimer
+
 from riscv_to_fj import create_fj_files_from_riscv_elf
 import flipjump
 
@@ -8,16 +11,18 @@ BUILD_DIR = Path(__file__).parent.parent / "build"
 
 
 def compile_c_to_riscv() -> None:
-    os.system(f"make")
+    with PrintTimer('  make c->riscv:   '):
+        assert 0 == os.system(f"make -s"), "Make c->riscv failed."
 
 
 def compile_riscv_to_fj() -> None:
-    create_fj_files_from_riscv_elf(
-        elf_path=BUILD_DIR / 'main.elf',
-        mem_path=BUILD_DIR / 'mem.fj',
-        jmp_path=BUILD_DIR / 'jmp.fj',
-        ops_path=BUILD_DIR / 'ops.fj',
-    )
+    with PrintTimer('  comp riscv->fj:  '):
+        create_fj_files_from_riscv_elf(
+            elf_path=BUILD_DIR / 'main.elf',
+            mem_path=BUILD_DIR / 'mem.fj',
+            jmp_path=BUILD_DIR / 'jmp.fj',
+            ops_path=BUILD_DIR / 'ops.fj',
+        )
 
 
 def compile_fj_to_fjm() -> None:
