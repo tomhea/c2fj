@@ -54,6 +54,7 @@ RB_CALL = 0b1110011  # TODO implement. ECALL is I=0, EBREAK is I=1 (everything e
 _WRITE_IMMEDIATE = 2
 _READ_IMMEDIATE = 6
 _EXIT_IMMEDIATE = 10
+_SBRK_IMMEDIATE = 14
 
 
 global pc_changed
@@ -180,12 +181,14 @@ def j_type(macro_name: str, op: int, addr: int) -> str:
 
     if imm % 4 == 2:
         if imm == _WRITE_IMMEDIATE:
-            return f'    .syscall.write_byte {rd}\n'
+            return f'    .syscall.write_byte {register_name(rd)}\n'
         elif imm == _READ_IMMEDIATE:
-            return f'    .syscall.read_byte {rd}\n'
+            return f'    .syscall.read_byte {register_name(rd)}\n'
         elif imm == _EXIT_IMMEDIATE:
             pc_changed = True
-            return f'    .syscall.exit {rd}\n'
+            return f'    .syscall.exit {register_name(rd)}\n'
+        elif imm == _SBRK_IMMEDIATE:
+            return f'    .syscall.sbrk {register_name(rd)}\n'
         else:
             raise InvalidOpcode(f"Bad imm offset in j-type op: 0x{op:08x} (address 0x{addr:08x}).")
 

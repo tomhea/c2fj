@@ -23,17 +23,8 @@ extern uint32_t _estack;
 
 
 caddr_t _sbrk(int incr) {
-    static unsigned char *heap = NULL;
-    unsigned char *prev_heap;
-
-    if (heap == NULL) {
-        heap = (unsigned char *) &_end;
-    }
-    prev_heap = heap;
-
-    heap += incr;
-
-    return (caddr_t) prev_heap;
+    asm volatile ("__sbrk_label: jal %0, __sbrk_label+14" : "+r"(incr));
+    return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
 }
 
 int _close(int file) {
@@ -90,7 +81,7 @@ int _read(int file, char *ptr, int len) {
     char* end_ptr = ptr + len;
     for (; ptr < end_ptr; ptr++) {
         char byte_was_read;
-        asm volatile ("__read_label: jal %0, __read_label+6" ::"r"(byte_was_read));
+        asm volatile ("__read_label: jal %0, __read_label+6" : "=r"(byte_was_read));
         *ptr = byte_was_read;
         // TODO: stl__read_char((uint8_t *)ptr);
     }

@@ -5,6 +5,18 @@ from typing import TextIO, Iterator, Tuple
 from riscv_instructions import write_op
 
 
+def get_symbol_value(elf: elftools.elf.elffile.ELFFile, symbol_name: str) -> int:
+    symtab_section = elf.get_section_by_name('.symtab')
+    if symtab_section is None:
+        raise ValueError('Symbol section not found.')
+
+    for symbol in symtab_section.iter_symbols():
+        if symbol.name == symbol_name:
+            return symbol.entry.st_value
+
+    raise ValueError(f'Symbol name "{symbol_name}" not found.')
+
+
 def get_addr_label_name(addr: int) -> str:
     return f'ADDR_{addr:08X}'
 
@@ -24,7 +36,7 @@ def write_memory_data(mem_file: TextIO, data: bytes, virtual_address: int, reser
     if len(data) > 0:
         mem_file.write(f'riscv.byte.vec {len(data)}, 0x{data[::-1].hex()}\n')
     if reserved_bytes_size > 0:
-        mem_file.write(f'reserve {reserved_bytes_size}*dw\n')
+        mem_file.write(f'reserve {hex(reserved_bytes_size)}*dw\n')
     mem_file.write(f'\n\n')
 
 
@@ -48,16 +60,21 @@ def write_open_riscv_namespace(file: TextIO) -> None:
     file.write(f"ns riscv {{\n\n\n")
 
 
-def write_init_riscv_ops(ops_file: TextIO, start_addr: int) -> None:
+def write_init_riscv_ops(ops_file: TextIO, start_addr: int, heap_start_address: int) -> None:
     ops_file.write(f"segment 0\n"
-                   f".start .{get_addr_label_name(start_addr)}\n\n\n")
+                   f".start .{get_addr_label_name(start_addr)}, {hex(heap_start_address)}\n\n\n")
 
 
 def write_close_riscv_namespace(file: TextIO) -> None:
     file.write(f"}}\n")
 
 
-def is_loaded_to_memory(segment):
+def is_loaded_to_memory(segment, section_map):
+    for section_addr, section_name in section_map.items():
+        if segment['p_vaddr'] <= section_addr < segment['p_vaddr'] + segment['p_memsz']:
+            if section_name.startswith('.fj_guard'):
+                return False
+
     return segment['p_type'] == 'PT_LOAD'
 
 
@@ -95,7 +112,7 @@ def write_file_prefixes(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO, el
     for file in (mem_file, jmp_file, ops_file):
         write_open_riscv_namespace(file)
 
-    write_init_riscv_ops(ops_file, get_start_address(elf))
+    write_init_riscv_ops(ops_file, get_start_address(elf), get_symbol_value(elf, "_heap_start"))
 
 
 def write_file_suffixes(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO) -> None:
@@ -116,8 +133,9 @@ def create_fj_files_from_riscv_elf(elf_path: Path, mem_path: Path, jmp_path: Pat
         elf = elftools.elf.elffile.ELFFile(elf_file)
         write_file_prefixes(mem_file, jmp_file, ops_file, elf)
 
+        section_map = {section['sh_addr']: section.name for section in elf.iter_sections()}
         for segment in get_segments(elf):
-            if is_loaded_to_memory(segment):
+            if is_loaded_to_memory(segment, section_map):
                 write_segment(mem_file, jmp_file, ops_file, segment)
 
         write_file_suffixes(mem_file, jmp_file, ops_file)

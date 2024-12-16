@@ -23,9 +23,10 @@ ns riscv {
         }
     }
 
-    def init {
+    def init sbrk_initial_address {
         .regs.init
         .fast_macros
+        .init_sbrk_ptr sbrk_initial_address
     }
 
     ns regs {
@@ -165,14 +166,19 @@ ns riscv {
         }
     }
 
+    def init_sbrk_ptr sbrk_initial_address > sbrk_ptr {
+      sbrk_ptr:
+        hex.vec .HLEN, sbrk_initial_address
+    }
+
 
     ns syscall {
         //  Time Complexity: 4@+268
         // Space Complexity: 6@+364
         //    prints the exit code (stored at src_register), then finishes.
-        def exit src_register_index < riscv.regs.start {
+        def exit src_register {
             stl.output "Program exited with exit code "
-            hex.print_uint 2, riscv.regs.start + ..REGISTER_SIZE*src_register_index, 1, 1
+            hex.print_uint 2, src_register, 1, 1
             stl.output ".\n"
             stl.loop
         }
@@ -180,25 +186,39 @@ ns riscv {
         //  Time Complexity: 2@
         // Space Complexity: 2@+52
         //   output the least-significant byte of src_register.
-        def write_byte src_register_index < riscv.regs.start {
-            hex.print riscv.regs.start + ..REGISTER_SIZE * src_register_index
+        def write_byte src_register {
+            hex.print src_register
         }
 
         //  Time Complexity: 10@+14
         // Space Complexity: 10@+108
         //   dst_register = input(8bits)
-        def read_byte dst_register_index < riscv.regs.start {
-            hex.zero ..HLEN-2, riscv.regs.start + ..REGISTER_SIZE * dst_register_index + 2*dw
-            hex.input riscv.regs.start + ..REGISTER_SIZE * dst_register_index
+        def read_byte dst_register {
+            hex.zero ..HLEN-2, dst_register + 2*dw
+            hex.input dst_register
+        }
+
+        // Increments riscv.heap_ptr by the value in register.
+        // Returns the old riscv.heap_ptr value in register.
+        def sbrk register @ old_heap_ptr, end < riscv.sbrk_ptr {
+            hex.mov ..HLEN, old_heap_ptr, riscv.sbrk_ptr
+            hex.add ..HLEN, riscv.sbrk_ptr, register
+            hex.mov ..HLEN, register, old_heap_ptr
+            ;end
+
+          old_heap_ptr:
+            riscv.regs.register
+
+          end:
         }
 
     }
 
 
-    def start entry_point {
+    def start entry_point, sbrk_initial_address {
         stl.startup_and_init_all            // inits everything flipjump needs
         ;entry_point                        // start executing riscv opcodes
-        .init                               // inits registers
+        .init sbrk_initial_address          // inits registers, constants, global code stubs
     }
 
 
@@ -265,6 +285,22 @@ ns riscv {
         .jump_to_pc
     }
 
+    // TODO check actually works (for both read / write).
+    def validate_mem_ptr_below_sbrk_ptr @ raise_error, end < .mem_ptr, .sbrk_ptr {
+        hex.cmp .HLEN, .mem_ptr, .sbrk_ptr, end, raise_error, raise_error
+
+      raise_error:
+        stl.output "Tried to access memory address above current brk:"
+        stl.output "\n  sbrk_ptr = "
+        hex.print_uint .HLEN, .sbrk_ptr, 1, 1
+        stl.output "\n  mem_ptr  = "
+        hex.print_uint .HLEN, .mem_ptr, 1, 1
+        stl.output "\nFinished with error.\n\n"
+        stl.loop
+
+      end:
+    }
+
     // Read .mem_op_byte_length bytes, starting from the .mem_ptr'th byte. Stores the result in .mem_data.
     // Notes:
     //  - Assumes mem_op_byte_length is one of {1,2,4}.
@@ -272,6 +308,7 @@ ns riscv {
     //  - Alters the value of .mem_ptr; expects return address in .ret.
     def fast_read_memory @ two, read1, read2, read4 < .ret, .mem_ptr, .mem_data, .mem_op_byte_length > read_memory {
       read_memory:
+        .validate_mem_ptr_below_sbrk_ptr
         rep(#w, _) hex.shl_bit w/4, .mem_ptr
         hex.add_constant w/4, .mem_ptr, .MEM
 
@@ -298,6 +335,7 @@ ns riscv {
     //  - Alters the value of .mem_ptr; expects return address in .ret.
     def fast_write_memory @ two, write1, write2, write4 < .ret, .mem_ptr, .mem_data, .mem_op_byte_length > write_memory {
       write_memory:
+        .validate_mem_ptr_below_sbrk_ptr
         rep(#w, _) hex.shl_bit w/4, .mem_ptr
         hex.add_constant w/4, .mem_ptr, .MEM
 
