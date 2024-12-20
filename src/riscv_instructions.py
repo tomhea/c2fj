@@ -39,16 +39,32 @@ RV_SLLI_FUNCT7 = 0b0000000
 RV_SRLI_FUNCT7 = 0b0000000
 RV_SRAI_FUNCT7 = 0b0100000
 
-
-RV_ALU = 0b0110011  # TODO 10 ALU ops
+RV_ALU = 0b0110011
 RV_ADD_SUB = 0b000
+RV_SLL = 0b001  # TODO implement op
+RV_SLT = 0b010  # TODO implement op
+RV_SLTU = 0b011  # TODO implement op
+RV_XOR = 0b100  # TODO implement op
+RV_SR = 0b101  # TODO implement ops
+RV_OR = 0b110  # TODO implement op
+RV_AND = 0b111  # TODO implement op
 RV_ADD_FUNCT7 = 0b0000000
 RV_SUB_FUNCT7 = 0b0100000
+RV_SLL_FUNCT7 = 0b0000000
+RV_SLT_FUNCT7 = 0b0000000
+RV_SLTU_FUNCT7 = 0b0000000
+RV_XOR_FUNCT7 = 0b0000000
+RV_SRL_FUNCT7 = 0b0000000
+RV_SRA_FUNCT7 = 0b0100000
+RV_OR_FUNCT7 = 0b0000000
+RV_AND_FUNCT7 = 0b0000000
 
+RV_FENCE = 0b0001111
+RV_FENCE_FUNCT3 = 0b000
 
-RV_FENCE = 0b000111  # TODO implement. Single op in ISA.
-
-RB_CALL = 0b1110011  # TODO implement. ECALL is I=0, EBREAK is I=1 (everything else is 0)
+RV_CALL = 0b1110011
+RV_ECALL_FULL_OP = RV_CALL
+RV_EBREAK_FULL_OP = (1 << 20) | RV_CALL
 
 
 _WRITE_IMMEDIATE = 2
@@ -292,6 +308,20 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(r_type('sub', full_op))
         else:
             raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+    elif opcode == RV_FENCE:
+        if funct3 == RV_FENCE_FUNCT3:
+            raise InvalidOpcode(f"C2fj doesn't support fence ops: encoding=0x{full_op:08x} (address 0x{addr:08x}).")
+        else:
+            raise InvalidOpcode(f"bad funct3 at fence op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+    elif opcode == RV_CALL:
+        if full_op == RV_ECALL_FULL_OP:
+            raise InvalidOpcode(f"C2fj doesn't support ecall ops (newlib shouldn't have produced it) (address 0x{addr:08x}).")
+        elif full_op == RV_EBREAK_FULL_OP:
+            raise InvalidOpcode(f"C2fj doesn't support ebreak ops (newlib shouldn't have produced it) (address 0x{addr:08x}).")
+        else:
+            raise InvalidOpcode(f"bad instruction at env call/break op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
     else:
         raise InvalidOpcode(f"invalid op: 0x{full_op:08x} (address 0x{addr:08x}).")
