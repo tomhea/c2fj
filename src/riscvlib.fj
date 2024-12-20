@@ -212,6 +212,10 @@ ns riscv {
           end:
         }
 
+        // Prints all the register values.
+        def debug_print_regs < ..print_all_regs, ..ret {
+            stl.fcall ..print_all_regs, ..ret
+        }
     }
 
 
@@ -278,11 +282,54 @@ ns riscv {
       .fast_jump_to_pc
       .fast_read_memory
       .fast_write_memory
+      .fast_debug_print_regs
     }
 
     def fast_jump_to_pc > jump_to_pc {
       jump_to_pc:
         .jump_to_pc
+    }
+
+    // Print the registers starting_index+{0,1,2,3}
+    def _print_4_regs starting_index < .regs.start {
+        hex.print_as_digit .HLEN, .regs.start + .HLEN*dw*(starting_index+0), 1
+        stl.output " "
+        hex.print_as_digit .HLEN, .regs.start + .HLEN*dw*(starting_index+1), 1
+        stl.output " "
+        hex.print_as_digit .HLEN, .regs.start + .HLEN*dw*(starting_index+2), 1
+        stl.output " "
+        hex.print_as_digit .HLEN, .regs.start + .HLEN*dw*(starting_index+3), 1
+        stl.output "\n"
+    }
+
+    // Prints all the register values.
+    def fast_debug_print_regs < .regs.pc, .sbrk_ptr, .ret > print_all_regs {
+      print_all_regs:
+        stl.output "\n"
+        stl.output "x00..03    "
+        ._print_4_regs 0x00
+        stl.output "x04..07    "
+        ._print_4_regs 0x04
+        stl.output "x08..11    "
+        ._print_4_regs 0x08
+        stl.output "x12..15    "
+        ._print_4_regs 0x0c
+        stl.output "x16..19    "
+        ._print_4_regs 0x10
+        stl.output "x20..23    "
+        ._print_4_regs 0x14
+        stl.output "x24..27    "
+        ._print_4_regs 0x18
+        stl.output "x28..31    "
+        ._print_4_regs 0x1c
+
+        stl.output "pc,sbrk    "
+        hex.print_as_digit .HLEN, .regs.pc, 1
+        stl.output " "
+        hex.print_as_digit .HLEN, .sbrk_ptr, 1
+        stl.output "\n\n"
+
+        stl.fret .ret
     }
 
     // TODO check actually works (for both read / write).

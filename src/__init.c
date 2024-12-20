@@ -22,6 +22,11 @@ extern uint32_t _estack;
 // TODO define the "vectors" (the interrupt vectors).
 
 
+void __debug_print_registers() {
+    asm volatile ("1: jal x0, 1b+18");
+}
+
+
 caddr_t _sbrk(int incr) {
     asm volatile ("1: jal %0, 1b+14" : "+r"(incr));
     return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.

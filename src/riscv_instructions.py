@@ -55,6 +55,7 @@ _WRITE_IMMEDIATE = 2
 _READ_IMMEDIATE = 6
 _EXIT_IMMEDIATE = 10
 _SBRK_IMMEDIATE = 14
+_DEBUG_REGISTERS_IMMEDIATE = 18
 
 
 global pc_changed
@@ -189,6 +190,8 @@ def j_type(macro_name: str, op: int, addr: int) -> str:
             return f'    .syscall.exit {register_name(rd)}\n'
         elif imm == _SBRK_IMMEDIATE:
             return f'    .syscall.sbrk {register_name(rd)}\n'
+        elif imm == _DEBUG_REGISTERS_IMMEDIATE:
+            return f'    .syscall.debug_print_regs\n'
         else:
             raise InvalidOpcode(f"Bad imm offset in j-type op: 0x{op:08x} (address 0x{addr:08x}).")
 
