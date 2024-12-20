@@ -41,11 +41,11 @@ RV_SRAI_FUNCT7 = 0b0100000
 
 RV_ALU = 0b0110011
 RV_ADD_SUB = 0b000
-RV_SLL = 0b001  # TODO implement op
+RV_SLL = 0b001
 RV_SLT = 0b010
 RV_SLTU = 0b011
 RV_XOR = 0b100
-RV_SR = 0b101  # TODO implement ops
+RV_SR = 0b101  # TODO implement sra
 RV_OR = 0b110
 RV_AND = 0b111
 RV_ADD_FUNCT7 = 0b0000000
@@ -318,7 +318,8 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(r_type('sltu', full_op))
         elif funct3 == RV_SLL and funct7 == RV_SLL_FUNCT7:
             ops_file.write(r_type('sll', full_op))
-
+        elif funct3 == RV_SR and funct7 == RV_SRL_FUNCT7:
+            ops_file.write(r_type('srl', full_op))
         else:
             raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
