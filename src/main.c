@@ -9,7 +9,7 @@ int d;
 int main() {
     static int e = 8;
     static int f;
-    unsigned int a = 1;
+    int a = 1;
     int b = 2;
 
 //    printf("Hello world\n");
@@ -31,8 +31,8 @@ int main() {
     a += e;
     a += f;
 
-    a += 0xb;
-    int g = 2;
+    a = 0xa1234567;
+    int g = 28;
     __debug_print_registers();
     return a >> g;
 }

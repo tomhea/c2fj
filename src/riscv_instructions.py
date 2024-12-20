@@ -45,7 +45,7 @@ RV_SLL = 0b001
 RV_SLT = 0b010
 RV_SLTU = 0b011
 RV_XOR = 0b100
-RV_SR = 0b101  # TODO implement sra
+RV_SR = 0b101
 RV_OR = 0b110
 RV_AND = 0b111
 RV_ADD_FUNCT7 = 0b0000000
@@ -225,8 +225,6 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
     global pc_changed
     pc_changed = False
 
-    # TODO verify instruction encoding go right
-
     if opcode == RV_LUI:
         ops_file.write(lui_op(full_op))
     elif opcode == RV_AUIPC:
@@ -320,6 +318,8 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(r_type('sll', full_op))
         elif funct3 == RV_SR and funct7 == RV_SRL_FUNCT7:
             ops_file.write(r_type('srl', full_op))
+        elif funct3 == RV_SR and funct7 == RV_SRA_FUNCT7:
+            ops_file.write(r_type('sra', full_op))
         else:
             raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
