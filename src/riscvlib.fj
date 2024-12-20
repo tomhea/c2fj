@@ -265,7 +265,7 @@ ns riscv {
 
 ns riscv {
     // Initialize the opcode implementation stubs, to be jumped into by some of the riscv op macros.
-    def fast_macros > ret, mem_ptr, mem_data, mem_op_byte_length {
+    def fast_macros > ret, mem_ptr, mem_data, mem_op_byte_length, remaining_shifts, shifted_data {
       ret:
         ;0
 
@@ -278,11 +278,17 @@ ns riscv {
       mem_op_byte_length:
         hex.hex
 
+      remaining_shifts:
+        hex.vec 2
+
+      shifted_data:
+        .regs.register
 
       .fast_jump_to_pc
       .fast_read_memory
       .fast_write_memory
       .fast_debug_print_regs
+      .fast_sll
     }
 
     def fast_jump_to_pc > jump_to_pc {
@@ -399,6 +405,50 @@ ns riscv {
         stl.fret .ret
       write4:
         hex.write_byte 4, .mem_ptr, .mem_data
+        stl.fret .ret
+    }
+
+    // In-place shift-left .shifted_data[:8] by .remaining_shifts[:2]%32. Return to .ret.
+    def fast_sll @ check16,shift16, check8,shift8, check4,shift4, bit_shifts,bit_shifts_switch, \
+            do_3_shifts,do_2_shifts,do_1_shifts,do_0_shifts < .remaining_shifts, .shifted_data, .ret > do_sll {
+      do_sll:
+
+      check16:
+        hex.if_flags .remaining_shifts+dw, 0xaaaa, check8, shift16  // if the lsb in on.
+      shift16:
+        hex.shl_hex .HLEN, 4, .shifted_data
+        .remaining_shifts+dw+dbit+0; check8
+
+      check8:
+        hex.if_flags .remaining_shifts, 0xff00, check4, shift8  // if .remaining_shifts >= 8
+      shift8:
+        hex.shl_hex .HLEN, 2, .shifted_data
+        .remaining_shifts+dbit+3; check4
+
+      check4:
+        hex.if_flags .remaining_shifts, 0x00f0, bit_shifts, shift4  // if 4 <= .remaining_shifts < 8
+      shift4:
+        hex.shl_hex .HLEN, .shifted_data
+        .remaining_shifts+dbit+2; bit_shifts
+
+      bit_shifts:
+        wflip .remaining_shifts+w, bit_shifts_switch, .remaining_shifts
+        pad 16
+      bit_shifts_switch:
+        ;do_0_shifts
+        ;do_1_shifts
+        ;do_2_shifts
+        ;do_3_shifts
+
+      do_3_shifts:
+        hex.shl_bit .HLEN, .shifted_data
+      do_2_shifts:
+        hex.shl_bit .HLEN, .shifted_data
+      do_1_shifts:
+        hex.shl_bit .HLEN, .shifted_data
+      do_0_shifts:
+        wflip .remaining_shifts+w, bit_shifts_switch
+
         stl.fret .ret
     }
 }
@@ -733,5 +783,13 @@ ns riscv {
 
       end:
         hex.zero .HLEN-1, rd+dw
+    }
+
+    // rd := rs1 << (rs2 % 32)
+    def sll rd, rs1, rs2 < .remaining_shifts, .shifted_data, .do_sll, .ret {
+        hex.mov 2, .remaining_shifts, rs2
+        hex.mov .HLEN, .shifted_data, rs1
+        stl.fcall .do_sll, .ret
+        hex.mov .HLEN, rd, .shifted_data
     }
 }

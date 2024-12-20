@@ -316,6 +316,9 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(r_type('slt', full_op))
         elif funct3 == RV_SLTU and funct7 == RV_SLTU_FUNCT7:
             ops_file.write(r_type('sltu', full_op))
+        elif funct3 == RV_SLL and funct7 == RV_SLL_FUNCT7:
+            ops_file.write(r_type('sll', full_op))
+
         else:
             raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
 

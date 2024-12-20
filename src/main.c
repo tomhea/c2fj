@@ -31,7 +31,8 @@ int main() {
     a += e;
     a += f;
 
+    a -= 0x43;
+    int g = 5;
     __debug_print_registers();
-
-    return a;
+    return a << g;
 }
