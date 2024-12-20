@@ -560,40 +560,25 @@ ns riscv {
       end:
     }
 
-    // Sets rd to 1 if [signed] rs1<imm (imm-1-rs1>=0), else to 0.
-    def slti rd, rs1, imm @ write1, temp_reg, end {
-        hex.set .HLEN, temp_reg, imm-1
-        hex.sub .HLEN, temp_reg, rs1
+    // Sets rd to 1 if [signed] rs1<imm, else to 0.
+    def slti rd, rs1, imm @ imm_var, end {
+        .slt rd, rs1, imm_var
+        ;end
 
-        hex.zero .HLEN, rd
-        hex.sign .HLEN, temp_reg, end, write1
-
-      temp_reg:
-        .regs.register
-
-      write1:
-        rd+dbit;end
+      imm_var:
+        hex.vec .HLEN, imm
 
       end:
     }
-    // Sets rd to 1 if [unsigned] rs1<imm (imm-1-rs1>=0), else to 0.
-    def sltiu rd, rs1, imm @ write0, write1, imm_var, end {
-        hex.set .HLEN, imm_var, imm
-
-        hex.cmp .HLEN, rs1, imm_var, write0, write1, write1
+    // Sets rd to 1 if [unsigned] rs1<imm, else to 0.
+    def sltiu rd, rs1, imm @ imm_var, end {
+        .sltu rd, rs1, imm_var
+        ;end
 
       imm_var:
-        .regs.register
-
-      write0:
-        hex.set rd, 0
-        ;end
-      write1:
-        hex.set rd, 1
-        ;end
+        hex.vec .HLEN, imm
 
       end:
-        hex.zero .HLEN-1, rd+dw
     }
 
     def xori rd, rs1, imm  @ imm_var, end {
@@ -717,5 +702,36 @@ ns riscv {
         .regs.register
 
       end:
+    }
+
+    // Sets rd to 1 if [signed] rs1<rs2, else to 0.
+    def slt rd, rs1, rs2 @ write1, result, end {
+        hex.mov .HLEN, result, rs1
+        hex.sub .HLEN, result, rs2
+
+        hex.zero .HLEN, rd
+        hex.sign .HLEN, result, write1, end
+
+      result:
+        .regs.register
+
+      write1:
+        rd+dbit;end
+
+      end:
+    }
+    // Sets rd to 1 if [unsigned] rs1<rs2, else to 0.
+    def sltu rd, rs1, rs2 @ write0, write1, end {
+        hex.cmp .HLEN, rs1, rs2, write1, write0, write0
+
+      write0:
+        hex.set rd, 0
+        ;end
+      write1:
+        hex.set rd, 1
+        ;end
+
+      end:
+        hex.zero .HLEN-1, rd+dw
     }
 }
