@@ -23,7 +23,7 @@ extern uint32_t _estack;
 
 
 caddr_t _sbrk(int incr) {
-    asm volatile ("__sbrk_label: jal %0, __sbrk_label+14" : "+r"(incr));
+    asm volatile ("1: jal %0, 1b+14" : "+r"(incr));
     return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
 }
 
@@ -47,7 +47,7 @@ int _lseek(int file, int ptr, int dir) {
 
 void _exit(int status) {
     // TODO print exit status.
-    asm volatile ("__exit_label: jal %0, __exit_label+10" ::"r"(status));
+    asm volatile ("1: jal %0, 1b+10" ::"r"(status));
     __builtin_unreachable();
 }
 
@@ -67,7 +67,7 @@ int _write(int file, char *ptr, int len) {
     char* end_ptr = ptr + len;
     for (; ptr < end_ptr; ptr++) {
         char char_to_print = *ptr;
-        asm volatile ("__write_label: jal %0, __write_label+2" ::"r"(char_to_print));
+        asm volatile ("1: jal %0, 1b+2" ::"r"(char_to_print));
         // TODO: stl__put_char((uint8_t)*ptr);
     }
     return len;
@@ -81,7 +81,7 @@ int _read(int file, char *ptr, int len) {
     char* end_ptr = ptr + len;
     for (; ptr < end_ptr; ptr++) {
         char byte_was_read;
-        asm volatile ("__read_label: jal %0, __read_label+6" : "=r"(byte_was_read));
+        asm volatile ("1: jal %0, 1b+6" : "=r"(byte_was_read));
         *ptr = byte_was_read;
         // TODO: stl__read_char((uint8_t *)ptr);
     }
@@ -90,22 +90,6 @@ int _read(int file, char *ptr, int len) {
 
 
 void start(void) {
-    /* Copy init values from text to data */
-    uint32_t *init_values_ptr = &_etext;
-    uint32_t *data_ptr = &_sdata;
-
-    if (init_values_ptr != data_ptr) {
-        for (; data_ptr < &_edata;) {
-            *data_ptr++ = *init_values_ptr++;
-        }
-    }
-
-    /* Clear the zero segment */
-    for (uint32_t *bss_ptr = &_sbss; bss_ptr < &_ebss;) {
-        *bss_ptr++ = 0;
-    }
-
-    /* Branch to main function */
     int status = main();
 
     _exit(status);

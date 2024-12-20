@@ -229,7 +229,7 @@ ns riscv {
         rep(.HLEN, i) .__xor_by_hex_const .regs.pc + i*dw, (constant >> (i*4)) & 0xf
     }
     def __xor_by_hex_const dst, constant {
-        rep(constant != 0, _) stl.wflip_macro dst + dw, constant * dw
+        rep(constant != 0, _) stl.wflip_macro dst + w, constant * dw
     }
 
     def set_register_value register_index, constant < .regs.start {

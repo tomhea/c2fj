@@ -69,12 +69,7 @@ def write_close_riscv_namespace(file: TextIO) -> None:
     file.write(f"}}\n")
 
 
-def is_loaded_to_memory(segment, section_map):
-    for section_addr, section_name in section_map.items():
-        if segment['p_vaddr'] <= section_addr < segment['p_vaddr'] + segment['p_memsz']:
-            if section_name.startswith('.fj_guard'):
-                return False
-
+def is_loaded_to_memory(segment):
     return segment['p_type'] == 'PT_LOAD'
 
 
@@ -133,9 +128,8 @@ def create_fj_files_from_riscv_elf(elf_path: Path, mem_path: Path, jmp_path: Pat
         elf = elftools.elf.elffile.ELFFile(elf_file)
         write_file_prefixes(mem_file, jmp_file, ops_file, elf)
 
-        section_map = {section['sh_addr']: section.name for section in elf.iter_sections()}
         for segment in get_segments(elf):
-            if is_loaded_to_memory(segment, section_map):
+            if is_loaded_to_memory(segment):
                 write_segment(mem_file, jmp_file, ops_file, segment)
 
         write_file_suffixes(mem_file, jmp_file, ops_file)

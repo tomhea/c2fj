@@ -1,10 +1,28 @@
 //#include <stdio.h>
 
+int c = 0x34;
+int d;
+
 int main() {
+    static int e = 8;
+    static int f;
+    int a = 1;
+    int b = 2;
+
 //    printf("Hello world\n");
 
-    int x = 8;
-    x += 9;
+    a++;
+    b++;
+    c++;
+    d++;
+    e++;
+    f++;
 
-    return x;
+    a += b;
+    a += c;
+    a += d;
+    a += e;
+    a += f;
+
+    return a;
 }
