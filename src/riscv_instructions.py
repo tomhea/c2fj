@@ -44,10 +44,10 @@ RV_ADD_SUB = 0b000
 RV_SLL = 0b001  # TODO implement op
 RV_SLT = 0b010  # TODO implement op
 RV_SLTU = 0b011  # TODO implement op
-RV_XOR = 0b100  # TODO implement op
+RV_XOR = 0b100
 RV_SR = 0b101  # TODO implement ops
-RV_OR = 0b110  # TODO implement op
-RV_AND = 0b111  # TODO implement op
+RV_OR = 0b110
+RV_AND = 0b111
 RV_ADD_FUNCT7 = 0b0000000
 RV_SUB_FUNCT7 = 0b0100000
 RV_SLL_FUNCT7 = 0b0000000
@@ -306,6 +306,12 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(r_type('add', full_op))
         elif funct3 == RV_ADD_SUB and funct7 == RV_SUB_FUNCT7:
             ops_file.write(r_type('sub', full_op))
+        elif funct3 == RV_XOR and funct7 == RV_XOR_FUNCT7:
+            ops_file.write(r_type('xor', full_op))
+        elif funct3 == RV_OR and funct7 == RV_OR_FUNCT7:
+            ops_file.write(r_type('or', full_op))
+        elif funct3 == RV_AND and funct7 == RV_AND_FUNCT7:
+            ops_file.write(r_type('and', full_op))
         else:
             raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
 

@@ -14,6 +14,10 @@ int main() {
 
 //    printf("Hello world\n");
 
+    a ^= b;
+    a |= b;
+    a &= b;
+
     a++;
     b++;
     c++;

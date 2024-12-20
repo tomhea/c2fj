@@ -684,4 +684,38 @@ ns riscv {
 
       end:
     }
+
+    def xor rd, rs1, rs2 @ result, end {
+        hex.mov .HLEN, result, rs1
+        hex.xor .HLEN, result, rs2
+        hex.mov .HLEN, rd, result
+        ;end
+
+      result:
+        .regs.register
+
+      end:
+    }
+    def or rd, rs1, rs2 @ result, end {
+        hex.mov .HLEN, result, rs1
+        hex.or .HLEN, result, rs2
+        hex.mov .HLEN, rd, result
+        ;end
+
+      result:
+        .regs.register
+
+      end:
+    }
+    def and rd, rs1, rs2 @ result, end {
+        hex.mov .HLEN, result, rs1
+        hex.and .HLEN, result, rs2
+        hex.mov .HLEN, rd, result
+        ;end
+
+      result:
+        .regs.register
+
+      end:
+    }
 }
