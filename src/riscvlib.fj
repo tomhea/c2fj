@@ -265,9 +265,18 @@ ns riscv {
 
 ns riscv {
     // Initialize the opcode implementation stubs, to be jumped into by some of the riscv op macros.
-    def fast_macros > ret, mem_ptr,mem_data,mem_op_byte_length, remaining_shifts,shifted_data,is_arithmetical_shift {
+    def fast_macros > ret, rs1, rs2, rd, \
+            mem_ptr, mem_data, mem_op_byte_length, \
+            remaining_shifts, shifted_data, is_arithmetical_shift {
       ret:
         ;0
+
+      rs1:
+        .regs.register
+      rs2:
+        .regs.register
+      rd:
+        .regs.register
 
       mem_ptr:
         hex.vec w/4
@@ -283,12 +292,13 @@ ns riscv {
       is_arithmetical_shift:
         bit.bit
 
-      .fast_jump_to_pc
-      .fast_read_memory
-      .fast_write_memory
-      .fast_debug_print_regs
-      .fast_sll
-      .fast_sr
+        .moves_to_from_middle_regs
+        .fast_jump_to_pc
+        .fast_read_memory
+        .fast_write_memory
+        .fast_debug_print_regs
+        .fast_sll
+        .fast_sr
     }
 
     def fast_jump_to_pc > jump_to_pc {
@@ -517,6 +527,324 @@ ns riscv {
     }
 }
 
+
+
+// Move to/from register fcalls
+
+ns riscv {
+def moves_to_from_middle_regs\
+        < .ret, .rs1, .rs2, .rd,\
+        .regs.x1, .regs.x2, .regs.x3, .regs.x4, .regs.x5, .regs.x6, .regs.x7, .regs.x8, .regs.x9, .regs.x10, .regs.x11,\
+        .regs.x12, .regs.x13, .regs.x14, .regs.x15, .regs.x16, .regs.x17, .regs.x18, .regs.x19, .regs.x20, .regs.x21,\
+        .regs.x22, .regs.x23, .regs.x24, .regs.x25, .regs.x26, .regs.x27, .regs.x28, .regs.x29, .regs.x30, .regs.x31\
+        > zero_rs2,\
+        xor_x0_to_rs2, xor_x1_to_rs2, xor_x2_to_rs2, xor_x3_to_rs2, xor_x4_to_rs2, xor_x5_to_rs2, xor_x6_to_rs2,\
+        xor_x7_to_rs2, xor_x8_to_rs2, xor_x9_to_rs2, xor_x10_to_rs2, xor_x11_to_rs2, xor_x12_to_rs2, xor_x13_to_rs2,\
+        xor_x14_to_rs2, xor_x15_to_rs2, xor_x16_to_rs2, xor_x17_to_rs2, xor_x18_to_rs2, xor_x19_to_rs2, xor_x20_to_rs2,\
+        xor_x21_to_rs2, xor_x22_to_rs2, xor_x23_to_rs2, xor_x24_to_rs2, xor_x25_to_rs2, xor_x26_to_rs2, xor_x27_to_rs2,\
+        xor_x28_to_rs2, xor_x29_to_rs2, xor_x30_to_rs2, xor_x31_to_rs2,\
+        mov_x0_to_rs1, mov_x1_to_rs1, mov_x2_to_rs1, mov_x3_to_rs1, mov_x4_to_rs1, mov_x5_to_rs1, mov_x6_to_rs1,\
+        mov_x7_to_rs1, mov_x8_to_rs1, mov_x9_to_rs1, mov_x10_to_rs1, mov_x11_to_rs1, mov_x12_to_rs1, mov_x13_to_rs1,\
+        mov_x14_to_rs1, mov_x15_to_rs1, mov_x16_to_rs1, mov_x17_to_rs1, mov_x18_to_rs1, mov_x19_to_rs1, mov_x20_to_rs1,\
+        mov_x21_to_rs1, mov_x22_to_rs1, mov_x23_to_rs1, mov_x24_to_rs1, mov_x25_to_rs1, mov_x26_to_rs1, mov_x27_to_rs1,\
+        mov_x28_to_rs1, mov_x29_to_rs1, mov_x30_to_rs1, mov_x31_to_rs1,\
+        mov_rd_to_x0, mov_rd_to_x1, mov_rd_to_x2, mov_rd_to_x3, mov_rd_to_x4, mov_rd_to_x5, mov_rd_to_x6, mov_rd_to_x7,\
+        mov_rd_to_x8, mov_rd_to_x9, mov_rd_to_x10, mov_rd_to_x11, mov_rd_to_x12, mov_rd_to_x13, mov_rd_to_x14,\
+        mov_rd_to_x15, mov_rd_to_x16, mov_rd_to_x17, mov_rd_to_x18, mov_rd_to_x19, mov_rd_to_x20, mov_rd_to_x21,\
+        mov_rd_to_x22, mov_rd_to_x23, mov_rd_to_x24, mov_rd_to_x25, mov_rd_to_x26, mov_rd_to_x27, mov_rd_to_x28,\
+        mov_rd_to_x29, mov_rd_to_x30, mov_rd_to_x31 {
+  zero_rs2:
+    hex.zero .HLEN, .rs2
+
+  xor_x0_to_rs2:
+    stl.fret .ret
+  xor_x1_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x1
+    stl.fret .ret
+  xor_x2_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x2
+    stl.fret .ret
+  xor_x3_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x3
+    stl.fret .ret
+  xor_x4_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x4
+    stl.fret .ret
+  xor_x5_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x5
+    stl.fret .ret
+  xor_x6_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x6
+    stl.fret .ret
+  xor_x7_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x7
+    stl.fret .ret
+  xor_x8_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x8
+    stl.fret .ret
+  xor_x9_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x9
+    stl.fret .ret
+  xor_x10_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x10
+    stl.fret .ret
+  xor_x11_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x11
+    stl.fret .ret
+  xor_x12_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x12
+    stl.fret .ret
+  xor_x13_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x13
+    stl.fret .ret
+  xor_x14_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x14
+    stl.fret .ret
+  xor_x15_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x15
+    stl.fret .ret
+  xor_x16_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x16
+    stl.fret .ret
+  xor_x17_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x17
+    stl.fret .ret
+  xor_x18_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x18
+    stl.fret .ret
+  xor_x19_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x19
+    stl.fret .ret
+  xor_x20_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x20
+    stl.fret .ret
+  xor_x21_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x21
+    stl.fret .ret
+  xor_x22_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x22
+    stl.fret .ret
+  xor_x23_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x23
+    stl.fret .ret
+  xor_x24_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x24
+    stl.fret .ret
+  xor_x25_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x25
+    stl.fret .ret
+  xor_x26_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x26
+    stl.fret .ret
+  xor_x27_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x27
+    stl.fret .ret
+  xor_x28_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x28
+    stl.fret .ret
+  xor_x29_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x29
+    stl.fret .ret
+  xor_x30_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x30
+    stl.fret .ret
+  xor_x31_to_rs2:
+    hex.xor .HLEN, .rs2, .regs.x31
+    stl.fret .ret
+
+  mov_x0_to_rs1:
+    stl.fret .ret
+  mov_x1_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x1
+    stl.fret .ret
+  mov_x2_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x2
+    stl.fret .ret
+  mov_x3_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x3
+    stl.fret .ret
+  mov_x4_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x4
+    stl.fret .ret
+  mov_x5_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x5
+    stl.fret .ret
+  mov_x6_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x6
+    stl.fret .ret
+  mov_x7_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x7
+    stl.fret .ret
+  mov_x8_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x8
+    stl.fret .ret
+  mov_x9_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x9
+    stl.fret .ret
+  mov_x10_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x10
+    stl.fret .ret
+  mov_x11_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x11
+    stl.fret .ret
+  mov_x12_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x12
+    stl.fret .ret
+  mov_x13_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x13
+    stl.fret .ret
+  mov_x14_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x14
+    stl.fret .ret
+  mov_x15_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x15
+    stl.fret .ret
+  mov_x16_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x16
+    stl.fret .ret
+  mov_x17_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x17
+    stl.fret .ret
+  mov_x18_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x18
+    stl.fret .ret
+  mov_x19_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x19
+    stl.fret .ret
+  mov_x20_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x20
+    stl.fret .ret
+  mov_x21_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x21
+    stl.fret .ret
+  mov_x22_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x22
+    stl.fret .ret
+  mov_x23_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x23
+    stl.fret .ret
+  mov_x24_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x24
+    stl.fret .ret
+  mov_x25_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x25
+    stl.fret .ret
+  mov_x26_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x26
+    stl.fret .ret
+  mov_x27_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x27
+    stl.fret .ret
+  mov_x28_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x28
+    stl.fret .ret
+  mov_x29_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x29
+    stl.fret .ret
+  mov_x30_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x30
+    stl.fret .ret
+  mov_x31_to_rs1:
+    hex.mov .HLEN, .rs1, .regs.x31
+    stl.fret .ret
+
+  mov_rd_to_x0:
+    stl.fret .ret
+  mov_rd_to_x1:
+    hex.mov .HLEN, .regs.x1, .rd
+    stl.fret .ret
+  mov_rd_to_x2:
+    hex.mov .HLEN, .regs.x2, .rd
+    stl.fret .ret
+  mov_rd_to_x3:
+    hex.mov .HLEN, .regs.x3, .rd
+    stl.fret .ret
+  mov_rd_to_x4:
+    hex.mov .HLEN, .regs.x4, .rd
+    stl.fret .ret
+  mov_rd_to_x5:
+    hex.mov .HLEN, .regs.x5, .rd
+    stl.fret .ret
+  mov_rd_to_x6:
+    hex.mov .HLEN, .regs.x6, .rd
+    stl.fret .ret
+  mov_rd_to_x7:
+    hex.mov .HLEN, .regs.x7, .rd
+    stl.fret .ret
+  mov_rd_to_x8:
+    hex.mov .HLEN, .regs.x8, .rd
+    stl.fret .ret
+  mov_rd_to_x9:
+    hex.mov .HLEN, .regs.x9, .rd
+    stl.fret .ret
+  mov_rd_to_x10:
+    hex.mov .HLEN, .regs.x10, .rd
+    stl.fret .ret
+  mov_rd_to_x11:
+    hex.mov .HLEN, .regs.x11, .rd
+    stl.fret .ret
+  mov_rd_to_x12:
+    hex.mov .HLEN, .regs.x12, .rd
+    stl.fret .ret
+  mov_rd_to_x13:
+    hex.mov .HLEN, .regs.x13, .rd
+    stl.fret .ret
+  mov_rd_to_x14:
+    hex.mov .HLEN, .regs.x14, .rd
+    stl.fret .ret
+  mov_rd_to_x15:
+    hex.mov .HLEN, .regs.x15, .rd
+    stl.fret .ret
+  mov_rd_to_x16:
+    hex.mov .HLEN, .regs.x16, .rd
+    stl.fret .ret
+  mov_rd_to_x17:
+    hex.mov .HLEN, .regs.x17, .rd
+    stl.fret .ret
+  mov_rd_to_x18:
+    hex.mov .HLEN, .regs.x18, .rd
+    stl.fret .ret
+  mov_rd_to_x19:
+    hex.mov .HLEN, .regs.x19, .rd
+    stl.fret .ret
+  mov_rd_to_x20:
+    hex.mov .HLEN, .regs.x20, .rd
+    stl.fret .ret
+  mov_rd_to_x21:
+    hex.mov .HLEN, .regs.x21, .rd
+    stl.fret .ret
+  mov_rd_to_x22:
+    hex.mov .HLEN, .regs.x22, .rd
+    stl.fret .ret
+  mov_rd_to_x23:
+    hex.mov .HLEN, .regs.x23, .rd
+    stl.fret .ret
+  mov_rd_to_x24:
+    hex.mov .HLEN, .regs.x24, .rd
+    stl.fret .ret
+  mov_rd_to_x25:
+    hex.mov .HLEN, .regs.x25, .rd
+    stl.fret .ret
+  mov_rd_to_x26:
+    hex.mov .HLEN, .regs.x26, .rd
+    stl.fret .ret
+  mov_rd_to_x27:
+    hex.mov .HLEN, .regs.x27, .rd
+    stl.fret .ret
+  mov_rd_to_x28:
+    hex.mov .HLEN, .regs.x28, .rd
+    stl.fret .ret
+  mov_rd_to_x29:
+    hex.mov .HLEN, .regs.x29, .rd
+    stl.fret .ret
+  mov_rd_to_x30:
+    hex.mov .HLEN, .regs.x30, .rd
+    stl.fret .ret
+  mov_rd_to_x31:
+    hex.mov .HLEN, .regs.x31, .rd
+    stl.fret .ret
+}
+}
 
 
 // ---------- opcodes
