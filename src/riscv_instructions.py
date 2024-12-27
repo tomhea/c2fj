@@ -140,11 +140,7 @@ def r_type(macro_name: str, op: int, dst_is_rs1: bool = True) -> str:
     rs2 = (op >> 20) & 0x1f
 
     mov_to_dst_reg = mov_rs1_to(rd) if dst_is_rs1 else mov_rd_to(rd)
-
-    if macro_name in ['add', 'sub', 'xor', 'or', 'and', 'slt', 'sltu']:
-        return f'    .{macro_name} {mov_to_dst_reg}, {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}\n'
-
-    return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {register_name(rs2)}\n'
+    return f'    .{macro_name} {mov_to_dst_reg}, {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}\n'
 
 
 def i_type(macro_name: str, op: int, dst_is_rs1: bool = True) -> str:

@@ -269,8 +269,7 @@ ns riscv {
 ns riscv {
     // Initialize the opcode implementation stubs, to be jumped into by some of the riscv op macros.
     def fast_macros > ret, rs1, rs2, rd, \
-            mem_ptr, mem_data, mem_op_byte_length, \
-            remaining_shifts, shifted_data, is_arithmetical_shift {
+            mem_ptr, mem_data, mem_op_byte_length {
       ret:
         ;0
 
@@ -288,12 +287,6 @@ ns riscv {
       mem_op_byte_length:
         hex.hex
 
-      remaining_shifts:
-        hex.vec 2
-      shifted_data:
-        .regs.register
-      is_arithmetical_shift:
-        bit.bit
 
         .moves_to_from_middle_regs
         .fast_jump_to_pc
@@ -428,31 +421,31 @@ ns riscv {
         stl.fret .ret
     }
 
-    // In-place shift-left .shifted_data[:8] by .remaining_shifts[:2]%32. Return to .ret.
+    // In-place shift-left .rs1[:8] by .rs2[:2]%32. Return to .ret.
     def fast_sll @ check16,shift16, check8,shift8, check4,shift4, bit_shifts,bit_shifts_switch, \
-            do_3_shifts,do_2_shifts,do_1_shifts,do_0_shifts < .remaining_shifts, .shifted_data, .ret > do_sll {
+            do_3_shifts,do_2_shifts,do_1_shifts,do_0_shifts < .rs2, .rs1, .ret > do_sll {
       do_sll:
 
       check16:
-        hex.if_flags .remaining_shifts+dw, 0xaaaa, check8, shift16  // if the lsb in on.
+        hex.if_flags .rs2+dw, 0xaaaa, check8, shift16  // if the lsb in on.
       shift16:
-        hex.shl_hex .HLEN, 4, .shifted_data
-        .remaining_shifts+dw+dbit+0; check8
+        hex.shl_hex .HLEN, 4, .rs1
+        .rs2+dw+dbit+0; check8
 
       check8:
-        hex.if_flags .remaining_shifts, 0xff00, check4, shift8  // if .remaining_shifts >= 8
+        hex.if_flags .rs2, 0xff00, check4, shift8  // if .rs2 >= 8
       shift8:
-        hex.shl_hex .HLEN, 2, .shifted_data
-        .remaining_shifts+dbit+3; check4
+        hex.shl_hex .HLEN, 2, .rs1
+        .rs2+dbit+3; check4
 
       check4:
-        hex.if_flags .remaining_shifts, 0x00f0, bit_shifts, shift4  // if 4 <= .remaining_shifts < 8
+        hex.if_flags .rs2, 0x00f0, bit_shifts, shift4  // if 4 <= .rs2 < 8
       shift4:
-        hex.shl_hex .HLEN, .shifted_data
-        .remaining_shifts+dbit+2; bit_shifts
+        hex.shl_hex .HLEN, .rs1
+        .rs2+dbit+2; bit_shifts
 
       bit_shifts:
-        wflip .remaining_shifts+w, bit_shifts_switch, .remaining_shifts
+        wflip .rs2+w, bit_shifts_switch, .rs2
         pad 16
       bit_shifts_switch:
         ;do_0_shifts
@@ -461,55 +454,63 @@ ns riscv {
         ;do_3_shifts
 
       do_3_shifts:
-        hex.shl_bit .HLEN, .shifted_data
+        hex.shl_bit .HLEN, .rs1
       do_2_shifts:
-        hex.shl_bit .HLEN, .shifted_data
+        hex.shl_bit .HLEN, .rs1
       do_1_shifts:
-        hex.shl_bit .HLEN, .shifted_data
+        hex.shl_bit .HLEN, .rs1
       do_0_shifts:
-        wflip .remaining_shifts+w, bit_shifts_switch
+        wflip .rs2+w, bit_shifts_switch
 
         stl.fret .ret
     }
 
-    // In-place shift-left .shifted_data[:8] by .remaining_shifts[:2]%32. Return to .ret.
-    // If .is_arithmetical_shift is on, does an arithmetical shift, else does a logical shift.
-    def fast_sr @ check16,shift16, check8,shift8, check4,shift4, bit_shifts,bit_shifts_switch, \
-            do_3_shifts,do_2_shifts,do_1_shifts,do_0_shifts, should_shift_1s,end, negative_data \
-            < .is_arithmetical_shift, .remaining_shifts, .shifted_data, .ret > do_sr {
+    // In-place shift-left .rs1[:8] by .rs2[:2]%32. Return to .ret.
+    // If jump to do_sra does an arithmetical shift, else if jump to do_srl does a logical shift.
+    def fast_sr @ do_sr, check16,shift16, check8,shift8, check4,shift4, bit_shifts,bit_shifts_switch, \
+            do_3_shifts,do_2_shifts,do_1_shifts,do_0_shifts, should_shift_1s,end, negative_data, is_arithmetical_shift \
+            < .rs2, .rs1, .ret > do_srl, do_sra {
+      do_srl:
+        bit.zero is_arithmetical_shift
+        ;do_sr
+
+      do_sra:
+        bit.one is_arithmetical_shift
+        ;do_sr
+
       do_sr:
 
         bit.zero should_shift_1s
-        hex.sign .HLEN, .shifted_data, negative_data, check16
+        hex.sign .HLEN, .rs1, negative_data, check16
       negative_data:
-        bit.xor should_shift_1s, .is_arithmetical_shift
+        bit.xor should_shift_1s, is_arithmetical_shift
 
       check16:
-        hex.if_flags .remaining_shifts+dw, 0xaaaa, check8, shift16  // if the lsb in on.
+        hex.if_flags .rs2+dw, 0xaaaa, check8, shift16  // if the lsb in on.
       shift16:
-        hex.shr_hex .HLEN, 4, .shifted_data
-        .remaining_shifts+dw+dbit+0;
+        hex.shr_hex .HLEN, 4, .rs1
+        .rs2+dw+dbit+0;
         bit.if0 .should_shift_1s, check8
-        hex.not 4, .shifted_data+(.HLEN-4)*dw
+        hex.not 4, .rs1+(.HLEN-4)*dw
 
       check8:
-        hex.if_flags .remaining_shifts, 0xff00, check4, shift8  // if .remaining_shifts >= 8
+        hex.if_flags .rs2, 0xff00, check4, shift8  // if .rs2 >= 8
       shift8:
-        hex.shr_hex .HLEN, 2, .shifted_data
-        .remaining_shifts+dbit+3;
+        hex.shr_hex .HLEN, 2, .rs1
+        .rs2+dbit+3;
         bit.if0 .should_shift_1s, check4
-        hex.not 2, .shifted_data+(.HLEN-2)*dw
+        hex.not 2, .rs1+(.HLEN-2)*dw
 
       check4:
-        hex.if_flags .remaining_shifts, 0x00f0, bit_shifts, shift4  // if 4 <= .remaining_shifts < 8
+        hex.if_flags .rs2, 0x00f0, bit_shifts, shift4  // if 4 <= .rs2 < 8
       shift4:
-        hex.shr_hex .HLEN, .shifted_data
-        .remaining_shifts+dbit+2;
+        hex.shr_hex .HLEN, .rs1
+        .rs2+dbit+2;
         bit.if0 .should_shift_1s, bit_shifts
-        hex.not .shifted_data+(.HLEN-1)*dw
+        hex.not .rs1+(.HLEN-1)*dw
 
       bit_shifts:
-        wflip .remaining_shifts+w, bit_shifts_switch, .remaining_shifts
+        wflip .rs2+w, bit_shifts_switch, .rs2
         pad 16
       bit_shifts_switch:
         ;do_0_shifts
@@ -518,18 +519,21 @@ ns riscv {
         ;do_3_shifts
 
       do_3_shifts:
-        hex.shr_bit .HLEN, .shifted_data
-        bit.exact_xor .shifted_data + (.HLEN-1)*dw + dbit+3, .should_shift_1s
+        hex.shr_bit .HLEN, .rs1
+        bit.exact_xor .rs1 + (.HLEN-1)*dw + dbit+3, .should_shift_1s
       do_2_shifts:
-        hex.shr_bit .HLEN, .shifted_data
-        bit.exact_xor .shifted_data + (.HLEN-1)*dw + dbit+3, .should_shift_1s
+        hex.shr_bit .HLEN, .rs1
+        bit.exact_xor .rs1 + (.HLEN-1)*dw + dbit+3, .should_shift_1s
       do_1_shifts:
-        hex.shr_bit .HLEN, .shifted_data
-        bit.exact_xor .shifted_data + (.HLEN-1)*dw + dbit+3, .should_shift_1s
+        hex.shr_bit .HLEN, .rs1
+        bit.exact_xor .rs1 + (.HLEN-1)*dw + dbit+3, .should_shift_1s
       do_0_shifts:
-        wflip .remaining_shifts+w, bit_shifts_switch, end
+        wflip .rs2+w, bit_shifts_switch, end
 
       should_shift_1s:
+        bit.bit
+
+      is_arithmetical_shift:
         bit.bit
 
       end:
@@ -1266,28 +1270,15 @@ ns riscv {
     }
 
     // rd := rs1 << (rs2 % 32)
-    def sll rd, rs1, rs2 < .remaining_shifts, .shifted_data, .do_sll, .ret {
-        hex.mov 2, .remaining_shifts, rs2
-        hex.mov .HLEN, .shifted_data, rs1
-        stl.fcall .do_sll, .ret
-        hex.mov .HLEN, rd, .shifted_data
+    def sll mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_sll {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_sll
     }
-
     // rd := rs1 >> (rs2 % 32) [logical shift]
-    def srl rd, rs1, rs2 < .is_arithmetical_shift, .remaining_shifts, .shifted_data, .do_sr, .ret {
-        bit.zero .is_arithmetical_shift
-        hex.mov 2, .remaining_shifts, rs2
-        hex.mov .HLEN, .shifted_data, rs1
-        stl.fcall .do_sr, .ret
-        hex.mov .HLEN, rd, .shifted_data
+    def srl mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_srl {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_srl
     }
-
     // rd := rs1 >> (rs2 % 32) [arithmetical shift]
-    def sra rd, rs1, rs2 < .is_arithmetical_shift, .remaining_shifts, .shifted_data, .do_sr, .ret {
-        bit.one .is_arithmetical_shift
-        hex.mov 2, .remaining_shifts, rs2
-        hex.mov .HLEN, .shifted_data, rs1
-        stl.fcall .do_sr, .ret
-        hex.mov .HLEN, rd, .shifted_data
+    def sra mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_sra {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_sra
     }
 }
