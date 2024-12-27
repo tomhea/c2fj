@@ -134,21 +134,28 @@ def get_hex_comment(op: int) -> str:
     return f'// op 0x{op:08x}'
 
 
-def r_type(macro_name: str, op: int) -> str:
+def r_type(macro_name: str, op: int, dst_is_rs1: bool = True) -> str:
     rd = (op >> 7) & 0x1f
     rs1 = (op >> 15) & 0x1f
     rs2 = (op >> 20) & 0x1f
 
-    if macro_name in ['add', 'sub', 'xor', 'or', 'and']:
-        return f'    .{macro_name} {mov_rs1_to(rd)}, {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}\n'
+    mov_to_dst_reg = mov_rs1_to(rd) if dst_is_rs1 else mov_rd_to(rd)
+
+    if macro_name in ['add', 'sub', 'xor', 'or', 'and', 'slt', 'sltu']:
+        return f'    .{macro_name} {mov_to_dst_reg}, {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}\n'
 
     return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {register_name(rs2)}\n'
 
 
-def i_type(macro_name: str, op: int) -> str:
+def i_type(macro_name: str, op: int, dst_is_rs1: bool = True) -> str:
     imm = sign_extend(op >> 20, 12)
     rs1 = (op >> 15) & 0x1f
     rd = (op >> 7) & 0x1f
+
+    mov_to_dst_reg = mov_rs1_to(rd) if dst_is_rs1 else mov_rd_to(rd)
+
+    if macro_name in ['slti', 'sltiu']:
+        return f'    .{macro_name} {mov_to_dst_reg}, {mov_to_rs1(rs1)}, {fj_hex(imm)}\n'
 
     return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {fj_hex(imm)}\n'
 
@@ -314,9 +321,9 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
         if funct3 == RV_ADDI:
             ops_file.write(i_type('addi', full_op))
         elif funct3 == RV_SLTI:
-            ops_file.write(i_type('slti', full_op))
+            ops_file.write(i_type('slti', full_op, dst_is_rs1=False))
         elif funct3 == RV_SLTIU:
-            ops_file.write(i_type('sltiu', full_op))
+            ops_file.write(i_type('sltiu', full_op, dst_is_rs1=False))
         elif funct3 == RV_XORI:
             ops_file.write(i_type('xori', full_op))
         elif funct3 == RV_ORI:
@@ -344,9 +351,9 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
         elif funct3 == RV_AND and funct7 == RV_AND_FUNCT7:
             ops_file.write(r_type('and', full_op))
         elif funct3 == RV_SLT and funct7 == RV_SLT_FUNCT7:
-            ops_file.write(r_type('slt', full_op))
+            ops_file.write(r_type('slt', full_op, dst_is_rs1=False))
         elif funct3 == RV_SLTU and funct7 == RV_SLTU_FUNCT7:
-            ops_file.write(r_type('sltu', full_op))
+            ops_file.write(r_type('sltu', full_op, dst_is_rs1=False))
         elif funct3 == RV_SLL and funct7 == RV_SLL_FUNCT7:
             ops_file.write(r_type('sll', full_op))
         elif funct3 == RV_SR and funct7 == RV_SRL_FUNCT7:
