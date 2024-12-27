@@ -154,7 +154,7 @@ def i_type(macro_name: str, op: int, dst_is_rs1: bool = True) -> str:
 
     mov_to_dst_reg = mov_rs1_to(rd) if dst_is_rs1 else mov_rd_to(rd)
 
-    if macro_name in ['slti', 'sltiu']:
+    if macro_name in ['addi', 'slti', 'sltiu']:
         return f'    .{macro_name} {mov_to_dst_reg}, {mov_to_rs1(rs1)}, {fj_hex(imm)}\n'
 
     return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {fj_hex(imm)}\n'

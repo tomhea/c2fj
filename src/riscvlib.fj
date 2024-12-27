@@ -358,7 +358,7 @@ ns riscv {
     }
 
     // TODO check actually works (for both read / write).
-    def validate_mem_ptr_below_sbrk_ptr @ raise_error, end < .mem_ptr, .sbrk_ptr {
+    def validate_mem_ptr_below_sbrk_ptr @ raise_error, end < .mem_ptr, .sbrk_ptr, .regs.pc {
         hex.cmp .HLEN, .mem_ptr, .sbrk_ptr, end, raise_error, raise_error
 
       raise_error:
@@ -367,6 +367,8 @@ ns riscv {
         hex.print_uint .HLEN, .sbrk_ptr, 1, 1
         stl.output "\n  mem_ptr  = "
         hex.print_uint .HLEN, .mem_ptr, 1, 1
+        stl.output "\n  Current Address = "
+        hex.print_uint .HLEN, .regs.pc, 1, 1
         stl.output "\nFinished with error.\n\n"
         stl.loop
 
@@ -569,6 +571,7 @@ def moves_to_from_middle_regs\
         mov_rs1_to_x28, mov_rs1_to_x29, mov_rs1_to_x30, mov_rs1_to_x31 {
   zero_rs2:
     hex.zero .HLEN, .rs2
+    stl.fret .ret
 
   xor_x0_to_rs2:
     stl.fret .ret
@@ -667,6 +670,7 @@ def moves_to_from_middle_regs\
     stl.fret .ret
 
   mov_x0_to_rs1:
+    hex.zero .HLEN, .rs1
     stl.fret .ret
   mov_x1_to_rs1:
     hex.mov .HLEN, .rs1, .regs.x1
@@ -1142,15 +1146,8 @@ ns riscv {
     def fast_addi {
         // TODO!!
     }
-    def addi rd, rs1, imm @ imm_var, end {
-        hex.mov .HLEN, rd, rs1
-        hex.add .HLEN, rd, imm_var
-        ;end
-
-      imm_var:
-        hex.vec .HLEN, imm
-
-      end:
+    def addi mov_from_rs1, mov_to_rs1, imm < .do_add {
+        .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_add
     }
 
     // Sets rd to 1 if [signed] rs1<imm, else to 0.
