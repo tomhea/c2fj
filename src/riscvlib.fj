@@ -300,12 +300,11 @@ ns riscv {
         .fast_read_memory
         .fast_write_memory
         .fast_debug_print_regs
+
         .fast_sll
         .fast_sr
 
-        .fast_addi
-
-        .fast_alu_reg_reg
+        .fast_alu
         .fast_slt
         .fast_sltu
     }
@@ -534,6 +533,24 @@ ns riscv {
         bit.bit
 
       end:
+        stl.fret .ret
+    }
+
+    def fast_alu < .rs1, .rs2, .ret > do_add, do_sub, do_xor, do_or, do_and {
+      do_add:
+        hex.add .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_sub:
+        hex.sub .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_xor:
+        hex.xor .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_or:
+        hex.or .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_and:
+        hex.and .HLEN, .rs1, .rs2
         stl.fret .ret
     }
 }
@@ -1142,12 +1159,17 @@ ns riscv {
         .store_op 4, rs1, rs2, imm
     }
 
-
-    def fast_addi {
-        // TODO!!
-    }
     def addi mov_from_rs1, mov_to_rs1, imm < .do_add {
         .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_add
+    }
+    def xori mov_from_rs1, mov_to_rs1, imm < .do_xor {
+        .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_xor
+    }
+    def ori mov_from_rs1, mov_to_rs1, imm < .do_or {
+        .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_or
+    }
+    def andi mov_from_rs1, mov_to_rs1, imm < .do_and {
+        .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_and
     }
 
     // Sets rd to 1 if [signed] rs1<imm, else to 0.
@@ -1157,37 +1179,6 @@ ns riscv {
     // Sets rd to 1 if [unsigned] rs1<imm, else to 0.
     def sltiu mov_from_rd, mov_to_rs1, imm < .do_sltu {
         .reg_imm_fast_op mov_from_rd, mov_to_rs1, imm, .do_sltu
-    }
-
-    def xori rd, rs1, imm  @ imm_var, end {
-        hex.mov .HLEN, rd, rs1
-        hex.xor .HLEN, rd, imm_var
-        ;end
-
-      imm_var:
-        hex.vec .HLEN, imm
-
-      end:
-    }
-    def ori rd, rs1, imm  @ imm_var, end {
-        hex.mov .HLEN, rd, rs1
-        hex.or .HLEN, rd, imm_var
-        ;end
-
-      imm_var:
-        hex.vec .HLEN, imm
-
-      end:
-    }
-    def andi rd, rs1, imm  @ imm_var, end {
-        hex.mov .HLEN, rd, rs1
-        hex.and .HLEN, rd, imm_var
-        ;end
-
-      imm_var:
-        hex.vec .HLEN, imm
-
-      end:
     }
 
     def slli rd, rs1, shift_const @ bit_reg, end {
@@ -1224,23 +1215,6 @@ ns riscv {
       end:
     }
 
-    def fast_alu_reg_reg < .rs1, .rs2, .ret > do_add, do_sub, do_xor, do_or, do_and {
-      do_add:
-        hex.add .HLEN, .rs1, .rs2
-        stl.fret .ret
-      do_sub:
-        hex.sub .HLEN, .rs1, .rs2
-        stl.fret .ret
-      do_xor:
-        hex.xor .HLEN, .rs1, .rs2
-        stl.fret .ret
-      do_or:
-        hex.or .HLEN, .rs1, .rs2
-        stl.fret .ret
-      do_and:
-        hex.and .HLEN, .rs1, .rs2
-        stl.fret .ret
-    }
     def add mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_add {
         .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_add
     }
