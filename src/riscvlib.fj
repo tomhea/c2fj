@@ -1185,39 +1185,16 @@ ns riscv {
         .reg_imm_fast_op mov_from_rd, mov_to_rs1, imm, .do_sltu
     }
 
-    def slli rd, rs1, shift_const @ bit_reg, end {
-        stl.hex2bit .HLEN, bit_reg, rs1
-        bit.shl 4*.HLEN, shift_const, bit_reg
-        stl.bit2hex 4*.HLEN, rd, bit_reg
-        ;end
-
-      bit_reg:
-        bit.vec 4*.HLEN
-
-      end:
+    def slli mov_from_rs1, mov_to_rs1, imm < .do_sll {
+        .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_sll
     }
-    def srli rd, rs1, shift_const @ bit_reg, end {
-        stl.hex2bit .HLEN, bit_reg, rs1
-        bit.shr 4*.HLEN, shift_const, bit_reg
-        stl.bit2hex 4*.HLEN, rd, bit_reg
-        ;end
-
-      bit_reg:
-        bit.vec 4*.HLEN
-
-      end:
+    def srli mov_from_rs1, mov_to_rs1, imm < .do_srl {
+        .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_srl
     }
-    def srai rd, rs1, shift_const @ bit_reg, end {
-        stl.hex2bit .HLEN, bit_reg, rs1
-        bit.shra 4*.HLEN, shift_const, bit_reg
-        stl.bit2hex 4*.HLEN, rd, bit_reg
-        ;end
-
-      bit_reg:
-        bit.vec 4*.HLEN
-
-      end:
+    def srai mov_from_rs1, mov_to_rs1, imm < .do_sra {
+        .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_sra
     }
+
 
     def add mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_add {
         .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_add
