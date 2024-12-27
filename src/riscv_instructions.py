@@ -102,6 +102,34 @@ def register_name(register_index: int) -> str:
     return f'.regs.x{register_index & 0x1f}'
 
 
+def mov_to_rs1(register_index: int) -> str:
+    """
+    @param register_index: the 5 lsb will be used.
+    """
+    return f'.mov_x{register_index & 0x1f}_to_rs1'
+
+
+def xor_to_rs2(register_index: int) -> str:
+    """
+    @param register_index: the 5 lsb will be used.
+    """
+    return f'.xor_x{register_index & 0x1f}_to_rs2'
+
+
+def mov_rs1_to(register_index: int) -> str:
+    """
+    @param register_index: the 5 lsb will be used.
+    """
+    return f'.mov_rs1_to_x{register_index & 0x1f}'
+
+
+def mov_rd_to(register_index: int) -> str:
+    """
+    @param register_index: the 5 lsb will be used.
+    """
+    return f'.mov_rd_to_x{register_index & 0x1f}'
+
+
 def get_hex_comment(op: int) -> str:
     return f'// op 0x{op:08x}'
 
@@ -110,6 +138,9 @@ def r_type(macro_name: str, op: int) -> str:
     rd = (op >> 7) & 0x1f
     rs1 = (op >> 15) & 0x1f
     rs2 = (op >> 20) & 0x1f
+
+    if macro_name in ['add']:
+        return f'    .{macro_name} {mov_rs1_to(rd)}, {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}\n'
 
     return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {register_name(rs2)}\n'
 
