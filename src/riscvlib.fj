@@ -300,7 +300,7 @@ ns riscv {
         .fast_sll
         .fast_sr
         .fast_addi
-        .fast_add
+        .fast_alu_reg_reg
     }
 
     def fast_jump_to_pc > jump_to_pc {
@@ -1211,59 +1211,37 @@ ns riscv {
       end:
     }
 
-    def fast_add < .rs1, .rs2, .ret > do_add {
+    def fast_alu_reg_reg < .rs1, .rs2, .ret > do_add, do_sub, do_xor, do_or, do_and {
       do_add:
         hex.add .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_sub:
+        hex.sub .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_xor:
+        hex.xor .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_or:
+        hex.or .HLEN, .rs1, .rs2
+        stl.fret .ret
+      do_and:
+        hex.and .HLEN, .rs1, .rs2
         stl.fret .ret
     }
     def add mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_add {
         .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_add
     }
-
-    def sub rd, rs1, rs2 @ result, end {
-        hex.mov .HLEN, result, rs1
-        hex.sub .HLEN, result, rs2
-        hex.mov .HLEN, rd, result
-        ;end
-
-      result:
-        .regs.register
-
-      end:
+    def sub mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_sub {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_sub
     }
-
-    def xor rd, rs1, rs2 @ result, end {
-        hex.mov .HLEN, result, rs1
-        hex.xor .HLEN, result, rs2
-        hex.mov .HLEN, rd, result
-        ;end
-
-      result:
-        .regs.register
-
-      end:
+    def xor mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_xor {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_xor
     }
-    def or rd, rs1, rs2 @ result, end {
-        hex.mov .HLEN, result, rs1
-        hex.or .HLEN, result, rs2
-        hex.mov .HLEN, rd, result
-        ;end
-
-      result:
-        .regs.register
-
-      end:
+    def or mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_or {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_or
     }
-    def and rd, rs1, rs2 @ result, end {
-        hex.mov .HLEN, result, rs1
-        hex.and .HLEN, result, rs2
-        hex.mov .HLEN, rd, result
-        ;end
-
-      result:
-        .regs.register
-
-      end:
+    def and mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_and {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_and
     }
 
     // Sets rd to 1 if [signed] rs1<rs2, else to 0.
