@@ -268,8 +268,7 @@ ns riscv {
 
 ns riscv {
     // Initialize the opcode implementation stubs, to be jumped into by some of the riscv op macros.
-    def fast_macros > ret, rs1, rs2, rd, \
-            mem_ptr, mem_data, mem_op_byte_length {
+    def fast_macros > ret, rs1, rs2, rd, mem_ptr {
       ret:
         ;0
 
@@ -282,10 +281,6 @@ ns riscv {
 
       mem_ptr:
         hex.vec w/4
-      mem_data:
-        .regs.register
-      mem_op_byte_length:
-        hex.hex
 
 
         .moves_to_from_middle_regs
@@ -379,24 +374,22 @@ ns riscv {
       end:
     }
 
-    // Read .mem_op_byte_length bytes, starting from the .mem_ptr'th byte. Stores the result in .mem_data.
+    // Read 1/2/4 bytes from the memory (where .mem_ptr points to) to .rd.
     // Notes:
-    //  - Assumes mem_op_byte_length is one of {1,2,4}.
-    //  - Assumes the value in mem_ptr is the non-fj address (i.e 32 for the 32'th byte, not 0x8000000000001000).
-    //  - Alters the value of .mem_ptr; expects return address in .ret.
-    def fast_read_memory @ two, read1, read4 < .ret, .mem_ptr, .mem_data, .mem_op_byte_length, .rd > read_memory, do_read2, do_read2_sign_extended {
-      read_memory:
-        .validate_mem_ptr_below_sbrk_ptr
-        rep(#w, _) hex.shl_bit w/4, .mem_ptr
-        hex.add_constant w/4, .mem_ptr, .MEM
+    //  - Assumes the value in mem_ptr is the fj address (i.e 0x8000000000001000 for the 32'th byte, not 32).
+    //  - The do_read{1,2}_sign_extended also sign extend the result in .rd to .HLEN.
+    //  - Expects return address in .ret.
+    def fast_read_memory < .ret, .mem_ptr, .rd \
+            > do_read1, do_read1_sign_extended, do_read2, do_read2_sign_extended, do_read4 {
+      do_read1:
+        hex.read_byte 1, .rd, .mem_ptr
+        hex.zero .HLEN-2, .rd+2*dw
+        stl.fret .ret
 
-        hex.cmp .mem_op_byte_length, two, read1, .do_read2, read4
-
-      two:
-        hex.hex 2
-
-      read1:
-        hex.read_byte .mem_data, .mem_ptr
+      do_read1_sign_extended:
+        hex.read_byte 1, .rd, .mem_ptr
+        hex.zero .HLEN-2, .rd+2*dw
+        .sign_extend_rd 1
         stl.fret .ret
 
       do_read2:
@@ -410,8 +403,8 @@ ns riscv {
         .sign_extend_rd 2
         stl.fret .ret
 
-      read4:
-        hex.read_byte 4, .mem_data, .mem_ptr
+      do_read4:
+        hex.read_byte 4, .rd, .mem_ptr
         stl.fret .ret
     }
 
@@ -1175,64 +1168,20 @@ ns riscv {
         .inc_pc addr
     }
 
-
-    def lea_to_mem_ptr rs1, imm < .mem_ptr {
-        hex.zero w/4, .mem_ptr
-        hex.xor .HLEN, .mem_ptr, rs1
-        hex.add_constant .HLEN, .mem_ptr, imm % (1<<(4*.HLEN))
+    def lb mov_from_rd, mov_to_rs1, imm < .do_read1 {
+        .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read1_sign_extended
     }
-
-    def load_op num_of_bytes, sign_extension, rd, rs1, imm @ negative_extension, end \
-            < .mem_data, .ret, .mem_op_byte_length, .read_memory {
-        .lea_to_mem_ptr rs1, imm
-
-        hex.set .mem_op_byte_length, num_of_bytes
-        stl.fcall .read_memory, .ret
-
-        hex.zero .HLEN, rd
-        hex.xor 2*num_of_bytes, rd, .mem_data
-
-        stl.comp_if0 sign_extension, end
-        hex.sign 2*num_of_bytes, rd, negative_extension, end
-
-      negative_extension:
-        hex.not .HLEN - 2*num_of_bytes, rd + 2*num_of_bytes * dw
-      end:
+    def lbu mov_from_rd, mov_to_rs1, imm < .do_read1_sign_extended {
+        .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read1
     }
-
-    def lb rd, rs1, imm {
-        .load_op 1, 1, rd, rs1, imm
-    }
-    def lbu rd, rs1, imm {
-        .load_op 1, 0, rd, rs1, imm
-    }
-
     def lh mov_from_rd, mov_to_rs1, imm < .do_read2 {
-        .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read2
-    }
-    def lhu mov_from_rd, mov_to_rs1, imm < .do_read2_sign_extended {
         .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read2_sign_extended
     }
-//    def lh rd, rs1, imm {
-//        .load_op 2, 1, rd, rs1, imm
-//    }
-//    def lhu rd, rs1, imm {
-//        .load_op 2, 0, rd, rs1, imm
-//    }
-
-    def lw rd, rs1, imm {
-        .load_op 4, 0, rd, rs1, imm
+    def lhu mov_from_rd, mov_to_rs1, imm < .do_read2_sign_extended {
+        .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read2
     }
-
-
-    def store_op num_of_bytes, rs1, rs2, imm \
-            < .mem_data, .ret, .mem_op_byte_length, .write_memory {
-        .lea_to_mem_ptr rs1, imm
-
-        hex.mov 2*num_of_bytes, .mem_data, rs2
-        hex.set .mem_op_byte_length, num_of_bytes
-
-        stl.fcall .write_memory, .ret
+    def lw mov_from_rd, mov_to_rs1, imm < .do_read4 {
+        .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read4
     }
 
     def sb mov_to_rs1, xor_to_rs2, imm < .do_write1 {

@@ -161,10 +161,7 @@ def load_type(macro_name: str, op: int) -> str:
     rs1 = (op >> 15) & 0x1f
     rd = (op >> 7) & 0x1f
 
-    if macro_name in ['lh', 'lhu']:
-        return f'    .{macro_name} {mov_rd_to(rd)}, {mov_to_rs1(rs1)}, {fj_hex(imm)}\n'
-
-    return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {fj_hex(imm)}\n'
+    return f'    .{macro_name} {mov_rd_to(rd)}, {mov_to_rs1(rs1)}, {fj_hex(imm)}\n'
 
 
 def shift_imm_op(macro_name: str, op: int) -> str:
