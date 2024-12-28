@@ -576,6 +576,32 @@ ns riscv {
 
         stl.fret .ret
     }
+
+    // Sets rd to 1 if [signed] rs1<rs2, else to 0.
+    def fast_slt @ write1, end < .rd, .rs1, .rs2, .ret > do_slt {
+      do_slt:
+        hex.zero .HLEN, .rd
+        hex.sub .HLEN, .rs1, .rs2
+        hex.sign .HLEN, .rs1, write1, end
+
+      write1:
+        .rd+dbit;end
+
+      end:
+        stl.fret .ret
+    }
+    // Sets rd to 1 if [unsigned] rs1<rs2, else to 0.
+    def fast_sltu @ write1, end < .rd, .rs1, .rs2, .ret > do_sltu {
+      do_sltu:
+        hex.zero .HLEN, .rd
+        hex.cmp .HLEN, .rs1, .rs2, write1, end, end
+
+      write1:
+        .rd+dbit; end
+
+      end:
+        stl.fret .ret
+    }
 }
 
 
@@ -1168,16 +1194,16 @@ ns riscv {
         .inc_pc addr
     }
 
-    def lb mov_from_rd, mov_to_rs1, imm < .do_read1 {
+    def lb mov_from_rd, mov_to_rs1, imm < .do_read1_sign_extended {
         .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read1_sign_extended
     }
-    def lbu mov_from_rd, mov_to_rs1, imm < .do_read1_sign_extended {
+    def lbu mov_from_rd, mov_to_rs1, imm < .do_read1 {
         .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read1
     }
-    def lh mov_from_rd, mov_to_rs1, imm < .do_read2 {
+    def lh mov_from_rd, mov_to_rs1, imm < .do_read2_sign_extended {
         .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read2_sign_extended
     }
-    def lhu mov_from_rd, mov_to_rs1, imm < .do_read2_sign_extended {
+    def lhu mov_from_rd, mov_to_rs1, imm < .do_read2 {
         .fast_read_op mov_from_rd, mov_to_rs1, imm, .do_read2
     }
     def lw mov_from_rd, mov_to_rs1, imm < .do_read4 {
@@ -1226,7 +1252,6 @@ ns riscv {
         .reg_imm_fast_op mov_from_rs1, mov_to_rs1, imm, .do_sra
     }
 
-
     def add mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_add {
         .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_add
     }
@@ -1244,35 +1269,10 @@ ns riscv {
     }
 
     // Sets rd to 1 if [signed] rs1<rs2, else to 0.
-    def fast_slt @ write1, end < .rd, .rs1, .rs2, .ret > do_slt {
-      do_slt:
-        hex.zero .HLEN, .rd
-        hex.sub .HLEN, .rs1, .rs2
-        hex.sign .HLEN, .rs1, write1, end
-
-      write1:
-        .rd+dbit;end
-
-      end:
-        stl.fret .ret
-    }
     def slt mov_from_rd, mov_to_rs1, xor_to_rs2 < .do_slt {
         .reg_reg_fast_op mov_from_rd, mov_to_rs1, xor_to_rs2, .do_slt
     }
-
-
     // Sets rd to 1 if [unsigned] rs1<rs2, else to 0.
-    def fast_sltu @ write1, end < .rd, .rs1, .rs2, .ret > do_sltu {
-      do_sltu:
-        hex.zero .HLEN, .rd
-        hex.cmp .HLEN, .rs1, .rs2, write1, end, end
-
-      write1:
-        .rd+dbit; end
-
-      end:
-        stl.fret .ret
-    }
     def sltu mov_from_rd, mov_to_rs1, xor_to_rs2 < .do_sltu {
         .reg_reg_fast_op mov_from_rd, mov_to_rs1, xor_to_rs2, .do_sltu
     }
