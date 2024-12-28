@@ -184,6 +184,9 @@ def s_type(macro_name: str, op: int) -> str:
     rs1 = (op >> 15) & 0x1f
     rs2 = (op >> 20) & 0x1f
 
+    if macro_name in ['sb']:
+        return f'    .{macro_name} {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}, {fj_hex(imm)}\n'
+
     return f'    .{macro_name} {register_name(rs1)}, {register_name(rs2)}, {fj_hex(imm)}\n'
 
 
