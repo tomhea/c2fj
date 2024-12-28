@@ -23,6 +23,8 @@ int calculate_int() {
     e++;
     f++;
 
+    c2fj_debug_p(1);
+
     a += b;
     a += c;
     a += d;
@@ -30,10 +32,15 @@ int calculate_int() {
     a += f;
 
     int g = 2;
-    __debug_print_registers();
-    __debug_print_register(g);
-    __debug_print_register(a);
-    __debug_print_register(a+1);
+    c2fj_debug_p(2);
+    c2fj_print_registers();
+    c2fj_debug_p(3);
+    c2fj_print_register(g);
+    c2fj_debug_p(2);
+    c2fj_print_register(a);
+    c2fj_debug_p(4);
+    c2fj_print_register(a+1);
+    c2fj_debug_p(0xff);
     return a >> g;
 }
 

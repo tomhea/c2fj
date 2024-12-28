@@ -69,12 +69,14 @@ RV_ECALL_FULL_OP = RV_CALL
 RV_EBREAK_FULL_OP = (1 << 20) | RV_CALL
 
 
-_WRITE_IMMEDIATE = 2
-_READ_IMMEDIATE = 6
-_EXIT_IMMEDIATE = 10
-_SBRK_IMMEDIATE = 14
-_DEBUG_REGISTERS_IMMEDIATE = 18
-_DEBUG_PRINT_REGISTER_IMMEDIATE = 22
+JAL_WRITE_IMMEDIATE = 2
+JAL_READ_IMMEDIATE = 6
+JAL_EXIT_IMMEDIATE = 10
+JAL_SBRK_IMMEDIATE = 14
+JAL_DEBUG_REGISTERS_IMMEDIATE = 18
+JAL_DEBUG_PRINT_REGISTER_IMMEDIATE = 22
+JAL_DEBUG_P_START_IMMEDIATE = 1002
+JAL_DEBUG_P_END_IMMEDIATE = 2022
 
 
 global pc_changed
@@ -242,18 +244,23 @@ def j_type(macro_name: str, op: int, addr: int) -> str:
     global pc_changed
 
     if imm % 4 == 2:
-        if imm == _WRITE_IMMEDIATE:
+        if JAL_DEBUG_P_START_IMMEDIATE <= imm <= JAL_DEBUG_P_END_IMMEDIATE:
+            p_imm = (imm - JAL_DEBUG_P_START_IMMEDIATE) // 4
+            imm_str = f'"debug_p{p_imm:02X}\\n"'
+            return f'    .syscall.print_string {imm_str}\n'
+
+        if imm == JAL_WRITE_IMMEDIATE:
             return f'    .syscall.write_byte {register_name(rd)}\n'
-        elif imm == _READ_IMMEDIATE:
+        elif imm == JAL_READ_IMMEDIATE:
             return f'    .syscall.read_byte {register_name(rd)}\n'
-        elif imm == _EXIT_IMMEDIATE:
+        elif imm == JAL_EXIT_IMMEDIATE:
             pc_changed = True
             return f'    .syscall.exit {register_name(rd)}\n'
-        elif imm == _SBRK_IMMEDIATE:
+        elif imm == JAL_SBRK_IMMEDIATE:
             return f'    .syscall.sbrk {register_name(rd)}\n'
-        elif imm == _DEBUG_REGISTERS_IMMEDIATE:
+        elif imm == JAL_DEBUG_REGISTERS_IMMEDIATE:
             return f'    .syscall.debug_print_regs\n'
-        elif imm == _DEBUG_PRINT_REGISTER_IMMEDIATE:
+        elif imm == JAL_DEBUG_PRINT_REGISTER_IMMEDIATE:
             return f'    .syscall.debug_print_reg {register_name(rd)}\n'
         else:
             raise InvalidOpcode(f"Bad imm offset in j-type op: 0x{op:08x} (address 0x{addr:08x}).")
