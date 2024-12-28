@@ -156,6 +156,17 @@ def i_type(macro_name: str, op: int, dst_is_rs1: bool = True) -> str:
     return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {fj_hex(imm)}\n'
 
 
+def load_type(macro_name: str, op: int) -> str:
+    imm = sign_extend(op >> 20, 12)
+    rs1 = (op >> 15) & 0x1f
+    rd = (op >> 7) & 0x1f
+
+    if macro_name in ['lh', 'lhu']:
+        return f'    .{macro_name} {mov_rd_to(rd)}, {mov_to_rs1(rs1)}, {fj_hex(imm)}\n'
+
+    return f'    .{macro_name} {register_name(rd)}, {register_name(rs1)}, {fj_hex(imm)}\n'
+
+
 def shift_imm_op(macro_name: str, op: int) -> str:
     shift_const = (op >> 20) & 0x1f
     rs1 = (op >> 15) & 0x1f
@@ -291,15 +302,15 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
 
     elif opcode == RV_L:
         if funct3 == RV_LB:
-            ops_file.write(i_type('lb', full_op))
+            ops_file.write(load_type('lb', full_op))
         elif funct3 == RV_LH:
-            ops_file.write(i_type('lh', full_op))
+            ops_file.write(load_type('lh', full_op))
         elif funct3 == RV_LW:
-            ops_file.write(i_type('lw', full_op))
+            ops_file.write(load_type('lw', full_op))
         elif funct3 == RV_LBU:
-            ops_file.write(i_type('lbu', full_op))
+            ops_file.write(load_type('lbu', full_op))
         elif funct3 == RV_LHU:
-            ops_file.write(i_type('lhu', full_op))
+            ops_file.write(load_type('lhu', full_op))
         else:
             raise InvalidOpcode(f"bad funct3 at load op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
