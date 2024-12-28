@@ -77,6 +77,8 @@ JAL_DEBUG_REGISTERS_IMMEDIATE = 18
 JAL_DEBUG_PRINT_REGISTER_IMMEDIATE = 22
 JAL_DEBUG_P_START_IMMEDIATE = 1002
 JAL_DEBUG_P_END_IMMEDIATE = 2022
+JAL_PRINT_CHAR_START_IMMEDIATE = 3002
+JAL_PRINT_CHAR_END_IMMEDIATE = 4022
 
 
 global pc_changed
@@ -248,6 +250,10 @@ def j_type(macro_name: str, op: int, addr: int) -> str:
             p_imm = (imm - JAL_DEBUG_P_START_IMMEDIATE) // 4
             imm_str = f'"debug_p{p_imm:02X}\\n"'
             return f'    .syscall.print_string {imm_str}\n'
+
+        if JAL_PRINT_CHAR_START_IMMEDIATE <= imm <= JAL_PRINT_CHAR_END_IMMEDIATE:
+            char_imm = (imm - JAL_PRINT_CHAR_START_IMMEDIATE) // 4
+            return f'    .syscall.print_string {char_imm}\n'
 
         if imm == JAL_WRITE_IMMEDIATE:
             return f'    .syscall.write_byte {register_name(rd)}\n'

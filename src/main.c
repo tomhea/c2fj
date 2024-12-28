@@ -41,6 +41,11 @@ int calculate_int() {
     c2fj_debug_p(4);
     c2fj_print_register(a+1);
     c2fj_debug_p(0xff);
+
+    c2fj_print_char('E');
+    c2fj_print_char('n');
+    c2fj_print_char('d');
+    c2fj_print_char('\n');
     return a >> g;
 }
 
