@@ -58,18 +58,33 @@ int _getpid(void) {
     return -1;
 }
 
-int _write(int file, char *ptr, int len) {
+int _write(int file, const char *ptr, int len) {
     if ((file != 1) && (file != 2) && (file != 3)) {
         return -1;
     }
 
-    char* end_ptr = ptr + len;
+    const char* end_ptr = ptr + len;
     for (; ptr < end_ptr; ptr++) {
         char char_to_print = *ptr;
         asm volatile ("1: jal %0, 1b+2" ::"r"(char_to_print));
     }
     return len;
 }
+
+
+int puts(const char *str) {
+    int len = strlen(str);
+    if (_write(1, str, len) != len) {
+        return -1;
+    }
+
+    if (_write(1, "\n", 1) != 1) {
+        return -1;
+    }
+
+    return 0;
+}
+
 
 int _read(int file, char *ptr, int len) {
     if (file != 0) {
