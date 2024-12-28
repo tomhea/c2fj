@@ -214,10 +214,7 @@ def b_type(macro_name: str, op: int, addr: int) -> str:
     global pc_changed
     pc_changed = True
 
-    if macro_name in ['beq']:
-        return f'    .{macro_name} {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}, {fj_hex(imm)}, {addr}\n'
-
-    return f'    .{macro_name} {register_name(rs1)}, {register_name(rs2)}, {fj_hex(imm)}, {addr}\n'
+    return f'    .{macro_name} {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}, {fj_hex(imm)}, {addr}\n'
 
 
 def u_type(op: int) -> [int, int]:

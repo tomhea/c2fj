@@ -1204,65 +1204,23 @@ ns riscv {
         .set_register_value rd_index, imm + addr
     }
 
-
     def beq mov_to_rs1, xor_to_rs2, imm, addr < .do_beq {
         .branch_fast_op mov_to_rs1, xor_to_rs2, .do_beq, addr, imm
     }
-
-//    def beq rs1, rs2, imm, addr @ take_jump, dont_jump {
-//        hex.cmp .HLEN, rs1, rs2, dont_jump, take_jump, dont_jump
-//      take_jump:
-//        .jump_to_constant_address addr, imm + addr
-//      dont_jump:
-//        .inc_pc addr
-//    }
-
-    def bne rs1, rs2, imm, addr @ take_jump, dont_jump {
-        hex.cmp .HLEN, rs1, rs2, take_jump, dont_jump, take_jump
-      take_jump:
-        .jump_to_constant_address addr, imm + addr
-      dont_jump:
-        .inc_pc addr
+    def bne mov_to_rs1, xor_to_rs2, imm, addr < .do_bne {
+        .branch_fast_op mov_to_rs1, xor_to_rs2, .do_bne, addr, imm
     }
-
-    def bltu rs1, rs2, imm, addr @ take_jump, dont_jump {
-        hex.cmp .HLEN, rs1, rs2, take_jump, dont_jump, dont_jump
-      take_jump:
-        .jump_to_constant_address addr, imm + addr
-      dont_jump:
-        .inc_pc addr
+    def bltu mov_to_rs1, xor_to_rs2, imm, addr < .do_bltu {
+        .branch_fast_op mov_to_rs1, xor_to_rs2, .do_bltu, addr, imm
     }
-
-    def bgeu rs1, rs2, imm, addr @ take_jump, dont_jump {
-        hex.cmp .HLEN, rs1, rs2, dont_jump, dont_jump, take_jump
-      take_jump:
-        .jump_to_constant_address addr, imm + addr
-      dont_jump:
-        .inc_pc addr
+    def bgeu mov_to_rs1, xor_to_rs2, imm, addr < .do_bgeu {
+        .branch_fast_op mov_to_rs1, xor_to_rs2, .do_bgeu, addr, imm
     }
-
-    def blt rs1, rs2, imm, addr @ take_jump, result, dont_jump {
-        hex.mov .HLEN, result, rs1
-        hex.sub .HLEN, result, rs2
-        hex.sign .HLEN, result, take_jump, dont_jump
-      take_jump:
-        .jump_to_constant_address addr, imm + addr
-      result:
-        .regs.register
-      dont_jump:
-        .inc_pc addr
+    def blt mov_to_rs1, xor_to_rs2, imm, addr < .do_blt {
+        .branch_fast_op mov_to_rs1, xor_to_rs2, .do_blt, addr, imm
     }
-
-    def bge rs1, rs2, imm, addr @ take_jump, result, dont_jump {
-        hex.mov .HLEN, result, rs1
-        hex.sub .HLEN, result, rs2
-        hex.sign .HLEN, result, dont_jump, take_jump
-      take_jump:
-        .jump_to_constant_address addr, imm + addr
-      result:
-        .regs.register
-      dont_jump:
-        .inc_pc addr
+    def bge mov_to_rs1, xor_to_rs2, imm, addr < .do_bge {
+        .branch_fast_op mov_to_rs1, xor_to_rs2, .do_bge, addr, imm
     }
 
     def lb mov_from_rd, mov_to_rs1, imm < .do_read1_sign_extended {
