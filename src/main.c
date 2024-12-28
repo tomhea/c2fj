@@ -1,7 +1,6 @@
 #include <stdio.h>
+#include "debug_c2fj.h"
 
-
-extern void __debug_print_registers();
 
 int c = 0x34;
 int d;
@@ -32,6 +31,9 @@ int calculate_int() {
 
     int g = 2;
     __debug_print_registers();
+    __debug_print_register(g);
+    __debug_print_register(a);
+    __debug_print_register(a+1);
     return a >> g;
 }
 

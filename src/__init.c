@@ -22,11 +22,6 @@ extern uint32_t _estack;
 // TODO define the "vectors" (the interrupt vectors).
 
 
-void __debug_print_registers() {
-    asm volatile ("1: jal x0, 1b+18");
-}
-
-
 caddr_t _sbrk(int incr) {
     asm volatile ("1: jal %0, 1b+14" : "+r"(incr));
     return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
@@ -51,7 +46,6 @@ int _lseek(int file, int ptr, int dir) {
 }
 
 void _exit(int status) {
-    // TODO print exit status.
     asm volatile ("1: jal %0, 1b+10" ::"r"(status));
     __builtin_unreachable();
 }
@@ -73,7 +67,6 @@ int _write(int file, char *ptr, int len) {
     for (; ptr < end_ptr; ptr++) {
         char char_to_print = *ptr;
         asm volatile ("1: jal %0, 1b+2" ::"r"(char_to_print));
-        // TODO: stl__put_char((uint8_t)*ptr);
     }
     return len;
 }
@@ -88,7 +81,6 @@ int _read(int file, char *ptr, int len) {
         char byte_was_read;
         asm volatile ("1: jal %0, 1b+6" : "=r"(byte_was_read));
         *ptr = byte_was_read;
-        // TODO: stl__read_char((uint8_t *)ptr);
     }
     return len;
 }

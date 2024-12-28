@@ -216,6 +216,13 @@ ns riscv {
         def debug_print_regs < ..print_all_regs, ..ret {
             stl.fcall ..print_all_regs, ..ret
         }
+
+        // Outputs the hex value of src_register.
+        def debug_print_reg src_register {
+            stl.output "Value of register: "
+            hex.print_uint ..HLEN, src_register, 1, 1
+            stl.output "\n"
+        }
     }
 
 
