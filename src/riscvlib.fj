@@ -1172,7 +1172,7 @@ def moves_to_from_middle_regs\
 def reg_reg_fast_op mov_from_dest, mov_to_rs1, xor_to_rs2, do_op @ table, end < .ret, .zero_rs2 {
     wflip .ret+w, table+dw, .ret
 
-    pad 32
+    pad 16
   table:
     .ret+dbit+2; do_op          // 4th
     .ret+dbit+1; mov_to_rs1     // 1st
@@ -1189,7 +1189,7 @@ def reg_reg_fast_op mov_from_dest, mov_to_rs1, xor_to_rs2, do_op @ table, end < 
 def reg_imm_fast_op mov_from_dest, mov_to_rs1, imm, do_op @ table, xor_imm_to_rs2, end < .ret, .zero_rs2, .rs2 {
     wflip .ret+w, table+dw, .ret
 
-    pad 32
+    pad 16
   table:
     .ret+dbit+2; do_op          // 4th
     .ret+dbit+1; mov_to_rs1     // 1st
@@ -1212,7 +1212,7 @@ def fast_write_op mov_to_rs1, xor_to_rs2, imm, do_write @ table, xor_imm_to_rs2,
         < .ret, .zero_rs2, .rs2, .calculate_mem_ptr {
     wflip .ret+w, table+dw, .ret
 
-    pad 32
+    pad 16
   table:
     .ret+dbit+2; .calculate_mem_ptr // 4th
     .ret+dbit+1; mov_to_rs1     // 1st
@@ -1236,7 +1236,7 @@ def fast_read_op mov_from_dest, mov_to_rs1, imm, do_read @ table, xor_imm_to_rs2
         < .ret, .zero_rs2, .rs2, .calculate_mem_ptr {
     wflip .ret+w, table+dw, .ret
 
-    pad 32
+    pad 16
   table:
     .ret+dbit+2; .calculate_mem_ptr // 4th
     .ret+dbit+1; mov_to_rs1     // 1st
@@ -1260,7 +1260,7 @@ def fast_read_op mov_from_dest, mov_to_rs1, imm, do_read @ table, xor_imm_to_rs2
 def branch_fast_op mov_to_rs1, xor_to_rs2, do_cmp, addr, imm @ table, dont_jump, take_jump < .ret, .zero_rs2 {
     wflip .ret+w, table+dw, .ret
 
-    pad 32
+    pad 16
   table:
     .ret+dbit+2; do_cmp         // 4th
     .ret+dbit+1; mov_to_rs1     // 1st
