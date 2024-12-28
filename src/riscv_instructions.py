@@ -283,8 +283,6 @@ def jal_op(macro_name: str, op: int, addr: int) -> str:
 
 
 def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
-    ops_file.write('    hex.zero .HLEN, .regs.zero\n')
-
     opcode = full_op & 0x7f
     funct3 = (full_op >> 12) & 7
     funct7 = full_op >> 25
