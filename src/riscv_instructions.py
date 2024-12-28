@@ -240,7 +240,7 @@ def auipc_op(op: int, addr: int) -> str:
     return f'    .auipc {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}, {addr}\n'
 
 
-def j_type(macro_name: str, op: int, addr: int) -> str:
+def jal_op(macro_name: str, op: int, addr: int) -> str:
     imm20 = op >> 31
     imm10_1 = (op >> 21) & 0x3ff
     imm11 = (op >> 20) & 0x1
@@ -279,7 +279,7 @@ def j_type(macro_name: str, op: int, addr: int) -> str:
             raise InvalidOpcode(f"Bad imm offset in j-type op: 0x{op:08x} (address 0x{addr:08x}).")
 
     pc_changed = True
-    return f'    .{macro_name} {rd}, {fj_hex(imm)}, {addr}\n'
+    return f'    .{macro_name} {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}, {addr}\n'
 
 
 def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
@@ -297,7 +297,7 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
     elif opcode == RV_AUIPC:
         ops_file.write(auipc_op(full_op, addr))
     elif opcode == RV_JAL:
-        ops_file.write(j_type('jal', full_op, addr))
+        ops_file.write(jal_op('jal', full_op, addr))
     elif opcode == RV_JALR:
         if funct3 != 0:
             raise InvalidOpcode(f"bad funct3 at jalr op: 0x{full_op:08x} (address 0x{addr:08x}).")

@@ -1276,14 +1276,20 @@ def branch_fast_op mov_to_rs1, xor_to_rs2, do_cmp, addr, imm @ table, dont_jump,
     .inc_pc addr
 }
 
+// Resets register rd using "fcall zero_rd", then set rd value to imm.
+def set_register zero_rd, rd, imm < .ret, .regs.zero {
+    stl.fcall zero_rd, .ret
+    rep(rd != .regs.zero, _) .__xor_by_hex_const .HLEN, rd, imm
+}
+
 }
 
 
 // ---------- opcodes
 
 ns riscv {
-    def jal rd_index, imm, current_address {
-        .set_register_value rd_index, current_address + 4
+    def jal zero_rd, rd, imm, current_address {
+        .set_register zero_rd, rd, current_address + 4
         .jump_to_constant_address current_address, current_address + imm
     }
 
@@ -1294,14 +1300,12 @@ ns riscv {
         ;.jump_to_pc
     }
 
-    def lui zero_rd, rd, imm < .ret, .regs.zero {
-        stl.fcall zero_rd, .ret
-        rep(rd != .regs.zero, _) .__xor_by_hex_const .HLEN, rd, imm
+    def lui zero_rd, rd, imm {
+        .set_register zero_rd, rd, imm
     }
 
-    def auipc zero_rd, rd, imm, addr < .ret, .regs.zero {
-        stl.fcall zero_rd, .ret
-        rep(rd != .regs.zero, _) .__xor_by_hex_const .HLEN, rd, imm + addr
+    def auipc zero_rd, rd, imm, addr {
+        .set_register zero_rd, rd, imm + addr
     }
 
     def beq mov_to_rs1, xor_to_rs2, imm, addr < .do_beq {
