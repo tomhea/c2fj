@@ -43,6 +43,7 @@ SECTIONS
         *(.data*);
         *(.sdata*);
         *(.rodata*);
+        *(.eh_frame*);
         _edata = .;
     } > ram AT >rom
 
