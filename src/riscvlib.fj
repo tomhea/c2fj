@@ -396,30 +396,19 @@ ns riscv {
         stl.fret .ret
     }
 
-    // Writes .mem_op_byte_length bytes from .mem_data to the memory, starting from the .mem_ptr'th byte.
+    // Writes 1/2/4 bytes from .rs2 to the memory (where .mem_ptr points to).
     // Notes:
-    //  - Assumes mem_op_byte_length is one of {1,2,4}.
-    //  - Assumes the value in mem_ptr is the non-fj address (i.e 32 for the 32'th byte, not 0x8000000000001000).
-    //  - Alters the value of .mem_ptr; expects return address in .ret.
-    def fast_write_memory @ two < .ret, .mem_ptr, .mem_data, .mem_op_byte_length, .rs2 > write_memory, do_write1, do_write2, do_write4 {
-      write_memory:
-        .validate_mem_ptr_below_sbrk_ptr
-        rep(#w, _) hex.shl_bit w/4, .mem_ptr
-        hex.add_constant w/4, .mem_ptr, .MEM
-
-        hex.cmp .mem_op_byte_length, two, .do_write1, .do_write2, .do_write4
-
-      two:
-        hex.hex 2
-
+    //  - Assumes the value in mem_ptr is the fj address (i.e 0x8000000000001000 for the 32'th byte, not 32).
+    //  - Expects return address in .ret.
+    def fast_write_memory < .ret, .mem_ptr, .rs2 > do_write1, do_write2, do_write4 {
       do_write1:
         hex.write_byte .mem_ptr, .rs2
         stl.fret .ret
       do_write2:
-        hex.write_byte 2, .mem_ptr, .mem_data
+        hex.write_byte 2, .mem_ptr, .rs2
         stl.fret .ret
       do_write4:
-        hex.write_byte 4, .mem_ptr, .mem_data
+        hex.write_byte 4, .mem_ptr, .rs2
         stl.fret .ret
     }
 
@@ -1200,14 +1189,11 @@ ns riscv {
     def sb mov_to_rs1, xor_to_rs2, imm < .do_write1 {
         .fast_write_op mov_to_rs1, xor_to_rs2, imm, .do_write1
     }
-//    def sb rs1, rs2, imm {
-//        .store_op 1, rs1, rs2, imm
-//    }
-    def sh rs1, rs2, imm {
-        .store_op 2, rs1, rs2, imm
+    def sh mov_to_rs1, xor_to_rs2, imm < .do_write2 {
+        .fast_write_op mov_to_rs1, xor_to_rs2, imm, .do_write2
     }
-    def sw rs1, rs2, imm {
-        .store_op 4, rs1, rs2, imm
+    def sw mov_to_rs1, xor_to_rs2, imm < .do_write4 {
+        .fast_write_op mov_to_rs1, xor_to_rs2, imm, .do_write4
     }
 
     def addi mov_from_rs1, mov_to_rs1, imm < .do_add {
