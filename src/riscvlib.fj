@@ -298,11 +298,13 @@ ns riscv {
 
         .moves_to_from_middle_regs
         .fast_calculate_mem_ptr
+        .fast_debug_print_regs
 
+        .fast_cmp
         .fast_jump_to_pc
+
         .fast_read_memory
         .fast_write_memory
-        .fast_debug_print_regs
 
         .fast_sll
         .fast_sr
@@ -614,6 +616,35 @@ ns riscv {
 
       end:
         stl.fret .ret
+    }
+
+    def fast_cmp @ dont_jump, take_jump < .rs1, .rs2, .ret > do_beq, do_bne, do_bltu, do_bgeu, do_blt, do_bge {
+      do_beq:
+        hex.cmp .HLEN, .rs1, .rs2, dont_jump, take_jump, dont_jump
+
+      do_bne:
+        hex.cmp .HLEN, .rs1, .rs2, take_jump, dont_jump, take_jump
+
+      do_bltu:
+        hex.cmp .HLEN, .rs1, .rs2, take_jump, dont_jump, dont_jump
+
+      do_bgeu:
+        hex.cmp .HLEN, .rs1, .rs2, dont_jump, dont_jump, take_jump
+
+      do_blt:
+        hex.sub .HLEN, .rs1, .rs2
+        hex.sign .HLEN, .rs1, take_jump, dont_jump
+
+      do_bge:
+        hex.sub .HLEN, .rs1, .rs2
+        hex.sign .HLEN, .rs1, dont_jump, take_jump
+
+
+      dont_jump:
+        ;.ret
+
+      take_jump:
+        .ret+dbit; .ret
     }
 }
 
@@ -1125,6 +1156,28 @@ def fast_read_op mov_from_dest, mov_to_rs1, imm, do_read @ table, xor_imm_to_rs2
   end:
 }
 
+
+// Sets rs1,rs2 according to the given "fcall_labels", fcalls "do_cmp", then set{+jump} the new pc.
+//  Jumps to "pc+imm" if the "do_cmp" flipped ".ret+dbit", else jumps to "pc+4".
+def branch_fast_op mov_to_rs1, xor_to_rs2, do_cmp, addr, imm @ table, dont_jump, take_jump < .ret, .zero_rs2 {
+    wflip .ret+w, table+dw, .ret
+
+    pad 32
+  table:
+    .ret+dbit+2; do_cmp         // 4th
+    .ret+dbit+1; mov_to_rs1     // 1st
+    .ret+dbit+1; xor_to_rs2     // 3rd
+    .ret+dbit+0; .zero_rs2      // 2nd
+    wflip .ret+w, table+4*dw, dont_jump // 5th if "do_cmp" didn't flip ".ret+dbit"
+    wflip .ret+w, table+5*dw, take_jump // 5th if "do_cmp" did flip ".ret+dbit"
+
+  take_jump:
+    .jump_to_constant_address addr, imm + addr
+
+  dont_jump:
+    .inc_pc addr
+}
+
 }
 
 
@@ -1151,13 +1204,18 @@ ns riscv {
         .set_register_value rd_index, imm + addr
     }
 
-    def beq rs1, rs2, imm, addr @ take_jump, dont_jump {
-        hex.cmp .HLEN, rs1, rs2, dont_jump, take_jump, dont_jump
-      take_jump:
-        .jump_to_constant_address addr, imm + addr
-      dont_jump:
-        .inc_pc addr
+
+    def beq mov_to_rs1, xor_to_rs2, imm, addr < .do_beq {
+        .branch_fast_op mov_to_rs1, xor_to_rs2, .do_beq, addr, imm
     }
+
+//    def beq rs1, rs2, imm, addr @ take_jump, dont_jump {
+//        hex.cmp .HLEN, rs1, rs2, dont_jump, take_jump, dont_jump
+//      take_jump:
+//        .jump_to_constant_address addr, imm + addr
+//      dont_jump:
+//        .inc_pc addr
+//    }
 
     def bne rs1, rs2, imm, addr @ take_jump, dont_jump {
         hex.cmp .HLEN, rs1, rs2, take_jump, dont_jump, take_jump
