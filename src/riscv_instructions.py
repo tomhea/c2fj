@@ -107,6 +107,13 @@ def register_name(register_index: int) -> str:
     return f'.regs.x{register_index & 0x1f}'
 
 
+def zero_register(register_index: int) -> str:
+    """
+    @param register_index: the 5 lsb will be used.
+    """
+    return f'.zero_x{register_index & 0x1f}'
+
+
 def mov_to_rs1(register_index: int) -> str:
     """
     @param register_index: the 5 lsb will be used.
@@ -225,12 +232,12 @@ def u_type(op: int) -> [int, int]:
 
 def lui_op(op: int) -> str:
     imm, rd = u_type(op)
-    return f'    .lui {rd}, {fj_hex(imm)}\n'
+    return f'    .lui {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}\n'
 
 
 def auipc_op(op: int, addr: int) -> str:
     imm, rd = u_type(op)
-    return f'    .auipc {rd}, {fj_hex(imm)}, {addr}\n'
+    return f'    .auipc {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}, {addr}\n'
 
 
 def j_type(macro_name: str, op: int, addr: int) -> str:

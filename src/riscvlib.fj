@@ -678,7 +678,10 @@ def moves_to_from_middle_regs\
         mov_rs1_to_x7, mov_rs1_to_x8, mov_rs1_to_x9, mov_rs1_to_x10, mov_rs1_to_x11, mov_rs1_to_x12, mov_rs1_to_x13,\
         mov_rs1_to_x14, mov_rs1_to_x15, mov_rs1_to_x16, mov_rs1_to_x17, mov_rs1_to_x18, mov_rs1_to_x19, mov_rs1_to_x20,\
         mov_rs1_to_x21, mov_rs1_to_x22, mov_rs1_to_x23, mov_rs1_to_x24, mov_rs1_to_x25, mov_rs1_to_x26, mov_rs1_to_x27,\
-        mov_rs1_to_x28, mov_rs1_to_x29, mov_rs1_to_x30, mov_rs1_to_x31 {
+        mov_rs1_to_x28, mov_rs1_to_x29, mov_rs1_to_x30, mov_rs1_to_x31,\
+        zero_x0, zero_x1, zero_x2, zero_x3, zero_x4, zero_x5, zero_x6, zero_x7, zero_x8, zero_x9, zero_x10, zero_x11,\
+        zero_x12, zero_x13, zero_x14, zero_x15, zero_x16, zero_x17, zero_x18, zero_x19, zero_x20, zero_x21, zero_x22,\
+        zero_x23, zero_x24, zero_x25, zero_x26, zero_x27, zero_x28, zero_x29, zero_x30, zero_x31 {
   zero_rs2:
     hex.zero .HLEN, .rs2
     stl.fret .ret
@@ -1068,6 +1071,101 @@ def moves_to_from_middle_regs\
     hex.mov .HLEN, .regs.x31, .rs1
     stl.fret .ret
 
+  zero_x0:
+    stl.fret .ret
+  zero_x1:
+    hex.zero .HLEN, .regs.x1
+    stl.fret .ret
+  zero_x2:
+    hex.zero .HLEN, .regs.x2
+    stl.fret .ret
+  zero_x3:
+    hex.zero .HLEN, .regs.x3
+    stl.fret .ret
+  zero_x4:
+    hex.zero .HLEN, .regs.x4
+    stl.fret .ret
+  zero_x5:
+    hex.zero .HLEN, .regs.x5
+    stl.fret .ret
+  zero_x6:
+    hex.zero .HLEN, .regs.x6
+    stl.fret .ret
+  zero_x7:
+    hex.zero .HLEN, .regs.x7
+    stl.fret .ret
+  zero_x8:
+    hex.zero .HLEN, .regs.x8
+    stl.fret .ret
+  zero_x9:
+    hex.zero .HLEN, .regs.x9
+    stl.fret .ret
+  zero_x10:
+    hex.zero .HLEN, .regs.x10
+    stl.fret .ret
+  zero_x11:
+    hex.zero .HLEN, .regs.x11
+    stl.fret .ret
+  zero_x12:
+    hex.zero .HLEN, .regs.x12
+    stl.fret .ret
+  zero_x13:
+    hex.zero .HLEN, .regs.x13
+    stl.fret .ret
+  zero_x14:
+    hex.zero .HLEN, .regs.x14
+    stl.fret .ret
+  zero_x15:
+    hex.zero .HLEN, .regs.x15
+    stl.fret .ret
+  zero_x16:
+    hex.zero .HLEN, .regs.x16
+    stl.fret .ret
+  zero_x17:
+    hex.zero .HLEN, .regs.x17
+    stl.fret .ret
+  zero_x18:
+    hex.zero .HLEN, .regs.x18
+    stl.fret .ret
+  zero_x19:
+    hex.zero .HLEN, .regs.x19
+    stl.fret .ret
+  zero_x20:
+    hex.zero .HLEN, .regs.x20
+    stl.fret .ret
+  zero_x21:
+    hex.zero .HLEN, .regs.x21
+    stl.fret .ret
+  zero_x22:
+    hex.zero .HLEN, .regs.x22
+    stl.fret .ret
+  zero_x23:
+    hex.zero .HLEN, .regs.x23
+    stl.fret .ret
+  zero_x24:
+    hex.zero .HLEN, .regs.x24
+    stl.fret .ret
+  zero_x25:
+    hex.zero .HLEN, .regs.x25
+    stl.fret .ret
+  zero_x26:
+    hex.zero .HLEN, .regs.x26
+    stl.fret .ret
+  zero_x27:
+    hex.zero .HLEN, .regs.x27
+    stl.fret .ret
+  zero_x28:
+    hex.zero .HLEN, .regs.x28
+    stl.fret .ret
+  zero_x29:
+    hex.zero .HLEN, .regs.x29
+    stl.fret .ret
+  zero_x30:
+    hex.zero .HLEN, .regs.x30
+    stl.fret .ret
+  zero_x31:
+    hex.zero .HLEN, .regs.x31
+    stl.fret .ret
 }
 
 // Sets rs1,rs2 according to the given "fcall_labels", fcalls "do_op", then moves the result to the appropriate dst reg.
@@ -1196,12 +1294,14 @@ ns riscv {
         ;.jump_to_pc
     }
 
-    def lui rd_index, imm {
-        .set_register_value rd_index, imm
+    def lui zero_rd, rd, imm < .ret, .regs.zero {
+        stl.fcall zero_rd, .ret
+        rep(rd != .regs.zero, _) .__xor_by_hex_const .HLEN, rd, imm
     }
 
-    def auipc rd_index, imm, addr {
-        .set_register_value rd_index, imm + addr
+    def auipc zero_rd, rd, imm, addr < .ret, .regs.zero {
+        stl.fcall zero_rd, .ret
+        rep(rd != .regs.zero, _) .__xor_by_hex_const .HLEN, rd, imm + addr
     }
 
     def beq mov_to_rs1, xor_to_rs2, imm, addr < .do_beq {
