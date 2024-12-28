@@ -192,7 +192,7 @@ def jalr_op(op: int, addr: int) -> str:
     global pc_changed
     pc_changed = True
 
-    return f'    .jalr {rd}, {register_name(rs1)}, {fj_hex(imm)}, {addr}\n'
+    return f'    .jalr {zero_register(rd)}, {register_name(rd)}, {mov_to_rs1(rs1)}, {fj_hex(imm)}, {addr}\n'
 
 
 def s_type(macro_name: str, op: int) -> str:

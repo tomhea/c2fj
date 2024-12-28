@@ -252,10 +252,6 @@ ns riscv {
         rep(constant != 0, _) stl.wflip_macro dst + w, constant * dw
     }
 
-    def set_register_value register_index, constant < .regs.start {
-        rep(register_index != 0, _) hex.set .HLEN, riscv.regs.start + .REGISTER_SIZE * register_index, constant
-    }
-
     def jump_to_constant_address current_address, new_address {
         .__xor_pc_value_by_const current_address ^ new_address
         ;.JMP + new_address/4*dw
@@ -274,6 +270,7 @@ ns riscv {
     }
 
 }
+
 
 
 // Fast calls:
@@ -299,6 +296,8 @@ ns riscv {
         .moves_to_from_middle_regs
         .fast_calculate_mem_ptr
         .fast_debug_print_regs
+
+        .fast_add_to_pc
 
         .fast_cmp
         .fast_jump_to_pc
@@ -646,6 +645,13 @@ ns riscv {
       take_jump:
         .ret+dbit; .ret
     }
+
+    // Adds .rs1 to .regs.pc
+    def fast_add_to_pc < .ret, .regs.pc, .rs1 > do_add_to_pc {
+      do_add_to_pc:
+        hex.add .HLEN, .regs.pc, .rs1
+        stl.fret .ret
+    }
 }
 
 
@@ -654,11 +660,11 @@ ns riscv {
 
 ns riscv {
 def moves_to_from_middle_regs\
-        < .ret, .rs1, .rs2, .rd,\
+        < .ret, .rs1, .rs2, .rd, .regs.pc,\
         .regs.x1, .regs.x2, .regs.x3, .regs.x4, .regs.x5, .regs.x6, .regs.x7, .regs.x8, .regs.x9, .regs.x10, .regs.x11,\
         .regs.x12, .regs.x13, .regs.x14, .regs.x15, .regs.x16, .regs.x17, .regs.x18, .regs.x19, .regs.x20, .regs.x21,\
         .regs.x22, .regs.x23, .regs.x24, .regs.x25, .regs.x26, .regs.x27, .regs.x28, .regs.x29, .regs.x30, .regs.x31\
-        > zero_rs2,\
+        > zero_rs2, zero_pc,\
         xor_x0_to_rs2, xor_x1_to_rs2, xor_x2_to_rs2, xor_x3_to_rs2, xor_x4_to_rs2, xor_x5_to_rs2, xor_x6_to_rs2,\
         xor_x7_to_rs2, xor_x8_to_rs2, xor_x9_to_rs2, xor_x10_to_rs2, xor_x11_to_rs2, xor_x12_to_rs2, xor_x13_to_rs2,\
         xor_x14_to_rs2, xor_x15_to_rs2, xor_x16_to_rs2, xor_x17_to_rs2, xor_x18_to_rs2, xor_x19_to_rs2, xor_x20_to_rs2,\
@@ -684,6 +690,10 @@ def moves_to_from_middle_regs\
         zero_x23, zero_x24, zero_x25, zero_x26, zero_x27, zero_x28, zero_x29, zero_x30, zero_x31 {
   zero_rs2:
     hex.zero .HLEN, .rs2
+    stl.fret .ret
+
+  zero_pc:
+    hex.zero .HLEN, .regs.pc
     stl.fret .ret
 
   xor_x0_to_rs2:
@@ -1282,6 +1292,24 @@ def set_register zero_rd, rd, imm < .ret, .regs.zero {
     rep(rd != .regs.zero, _) .__xor_by_hex_const .HLEN, rd, imm
 }
 
+
+// Sets rs1 according to the given "fcall_label", .regs.pc to the given imm, then fcalls ".do_add_to_pc".
+def jalr_fast_op mov_to_rs1, imm @ table, xor_imm_to_pc < .ret, .zero_pc, .regs.pc, .do_add_to_pc, .jump_to_pc {
+    wflip .ret+w, table+dw, .ret
+
+    pad 16
+  table:
+    .ret+dbit+2; .do_add_to_pc  // 4th
+    .ret+dbit+1; mov_to_rs1     // 1st
+    .ret+dbit+1; xor_imm_to_pc  // 3rd
+    .ret+dbit+0; .zero_pc       // 2nd
+    wflip .ret+w, table+4*dw, .jump_to_pc   // 5th
+
+  xor_imm_to_pc:
+    .__xor_by_hex_const .HLEN, .regs.pc, imm
+    stl.fret .ret
+}
+
 }
 
 
@@ -1293,11 +1321,9 @@ ns riscv {
         .jump_to_constant_address current_address, current_address + imm
     }
 
-    def jalr rd_index, rs1, imm, current_address < .regs.pc, .jump_to_pc {
-        hex.mov .HLEN, .regs.pc, rs1
-        .set_register_value rd_index, current_address + 4
-        rep(imm!=0,_) hex.add_constant .HLEN, .regs.pc, imm % (1<<(4*.HLEN))
-        ;.jump_to_pc
+    def jalr zero_rd, rd, mov_to_rs1, imm, current_address {
+        .set_register zero_rd, rd, current_address + 4
+        .jalr_fast_op mov_to_rs1, imm
     }
 
     def lui zero_rd, rd, imm {
