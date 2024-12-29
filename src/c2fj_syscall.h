@@ -1,7 +1,5 @@
 #pragma once
 
-#include <sys/types.h>
-
 
 // Stringify macros
 #define __TO_STRING_INNER(x) #x
@@ -29,16 +27,6 @@ __FORCE_INLINE void c2fj_print_registers(){
 
 __FORCE_INLINE void c2fj_print_register(int reg) {
     asm volatile ("1: jal %0, 1b+22" ::"r"(reg));
-}
-
-__FORCE_INLINE caddr_t _sbrk(int incr) {
-    asm volatile ("1: jal %0, 1b+14" : "+r"(incr));
-    return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
-}
-
-__FORCE_INLINE void _exit(int status) {
-    asm volatile ("1: jal %0, 1b+10" ::"r"(status));
-    __builtin_unreachable();
 }
 
 __FORCE_INLINE void c2fj_putc(const char char_to_print) {

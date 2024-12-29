@@ -1,5 +1,6 @@
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include "c2fj_syscall.h"
 
@@ -8,6 +9,16 @@ int main();
 
 extern uint32_t _stack_end;
 
+
+caddr_t _sbrk(int incr) {
+    asm volatile ("1: jal %0, 1b+14" : "+r"(incr));
+    return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
+}
+
+void _exit(int status) {
+    asm volatile ("1: jal %0, 1b+10" ::"r"(status));
+    __builtin_unreachable();
+}
 
 int _close(int file) {
     return -1;
@@ -54,10 +65,7 @@ int puts(const char *str) {
         return -1;
     }
 
-    if (_write(1, "\n", 1) != 1) {
-        return -1;
-    }
-
+    c2fj_putc('\n');
     return 0;
 }
 
