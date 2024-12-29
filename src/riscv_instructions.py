@@ -1,6 +1,5 @@
 from typing import TextIO
 
-
 RV_LUI = 0b0110111
 RV_AUIPC = 0b0010111
 RV_JAL = 0b1101111
@@ -68,7 +67,6 @@ RV_CALL = 0b1110011
 RV_ECALL_FULL_OP = RV_CALL
 RV_EBREAK_FULL_OP = (1 << 20) | RV_CALL
 
-
 JAL_WRITE_IMMEDIATE = 2
 JAL_READ_IMMEDIATE = 6
 JAL_EXIT_IMMEDIATE = 10
@@ -79,7 +77,6 @@ JAL_DEBUG_P_START_IMMEDIATE = 1002
 JAL_DEBUG_P_END_IMMEDIATE = 2022
 JAL_PRINT_CHAR_START_IMMEDIATE = 3002
 JAL_PRINT_CHAR_END_IMMEDIATE = 4022
-
 
 global pc_changed
 
@@ -282,6 +279,101 @@ def jal_op(macro_name: str, op: int, addr: int) -> str:
     return f'    .{macro_name} {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}, {addr}\n'
 
 
+def write_branch_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct7: int) -> None:
+    if funct3 == RV_BEQ:
+        ops_file.write(b_type('beq', full_op, addr))
+    elif funct3 == RV_BNE:
+        ops_file.write(b_type('bne', full_op, addr))
+    elif funct3 == RV_BLT:
+        ops_file.write(b_type('blt', full_op, addr))
+    elif funct3 == RV_BGE:
+        ops_file.write(b_type('bge', full_op, addr))
+    elif funct3 == RV_BLTU:
+        ops_file.write(b_type('bltu', full_op, addr))
+    elif funct3 == RV_BGEU:
+        ops_file.write(b_type('bgeu', full_op, addr))
+    else:
+        raise InvalidOpcode(f"bad funct3 at branch op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+
+def write_load_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct7: int) -> None:
+    if funct3 == RV_LB:
+        ops_file.write(load_type('lb', full_op))
+    elif funct3 == RV_LH:
+        ops_file.write(load_type('lh', full_op))
+    elif funct3 == RV_LW:
+        ops_file.write(load_type('lw', full_op))
+    elif funct3 == RV_LBU:
+        ops_file.write(load_type('lbu', full_op))
+    elif funct3 == RV_LHU:
+        ops_file.write(load_type('lhu', full_op))
+    else:
+        raise InvalidOpcode(f"bad funct3 at load op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+
+def write_store_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct7: int) -> None:
+    if funct3 == RV_SB:
+        ops_file.write(s_type('sb', full_op))
+    elif funct3 == RV_SH:
+        ops_file.write(s_type('sh', full_op))
+    elif funct3 == RV_SW:
+        ops_file.write(s_type('sw', full_op))
+    else:
+        raise InvalidOpcode(f"bad funct3 at store op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+
+def write_alu_imm_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct7: int) -> None:
+    if funct3 == RV_ADDI:
+        ops_file.write(i_type('addi', full_op))
+    elif funct3 == RV_SLTI:
+        ops_file.write(i_type('slti', full_op, dst_is_rs1=False))
+    elif funct3 == RV_SLTIU:
+        ops_file.write(i_type('sltiu', full_op, dst_is_rs1=False))
+    elif funct3 == RV_XORI:
+        ops_file.write(i_type('xori', full_op))
+    elif funct3 == RV_ORI:
+        ops_file.write(i_type('ori', full_op))
+    elif funct3 == RV_ANDI:
+        ops_file.write(i_type('andi', full_op))
+    elif funct3 == RV_SLLI and funct7 == RV_SLLI_FUNCT7:
+        ops_file.write(shift_imm_op('slli', full_op))
+    elif funct3 == RV_SRI and funct7 == RV_SRLI_FUNCT7:
+        ops_file.write(shift_imm_op('srli', full_op))
+    elif funct3 == RV_SRI and funct7 == RV_SRAI_FUNCT7:
+        ops_file.write(shift_imm_op('srai', full_op))
+    else:
+        raise InvalidOpcode(f"bad funct3/funct7 at alu_imm op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+
+def write_alu_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct7: int) -> None:
+    if funct3 == RV_ADD_SUB and funct7 == RV_ADD_FUNCT7:
+        ops_file.write(r_type('add', full_op))
+    elif funct3 == RV_ADD_SUB and funct7 == RV_SUB_FUNCT7:
+        ops_file.write(r_type('sub', full_op))
+    elif funct3 == RV_XOR and funct7 == RV_XOR_FUNCT7:
+        ops_file.write(r_type('xor', full_op))
+    elif funct3 == RV_OR and funct7 == RV_OR_FUNCT7:
+        ops_file.write(r_type('or', full_op))
+    elif funct3 == RV_AND and funct7 == RV_AND_FUNCT7:
+        ops_file.write(r_type('and', full_op))
+    elif funct3 == RV_SLT and funct7 == RV_SLT_FUNCT7:
+        ops_file.write(r_type('slt', full_op, dst_is_rs1=False))
+    elif funct3 == RV_SLTU and funct7 == RV_SLTU_FUNCT7:
+        ops_file.write(r_type('sltu', full_op, dst_is_rs1=False))
+    elif funct3 == RV_SLL and funct7 == RV_SLL_FUNCT7:
+        ops_file.write(r_type('sll', full_op))
+    elif funct3 == RV_SR and funct7 == RV_SRL_FUNCT7:
+        ops_file.write(r_type('srl', full_op))
+    elif funct3 == RV_SR and funct7 == RV_SRA_FUNCT7:
+        ops_file.write(r_type('sra', full_op))
+    else:
+        raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
+
+
+def write_rv32m_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct7: int) -> None:
+    pass
+
+
 def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
     opcode = full_op & 0x7f
     funct3 = (full_op >> 12) & 7
@@ -303,90 +395,19 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
             ops_file.write(jalr_op(full_op, addr))
 
     elif opcode == RV_B:
-        if funct3 == RV_BEQ:
-            ops_file.write(b_type('beq', full_op, addr))
-        elif funct3 == RV_BNE:
-            ops_file.write(b_type('bne', full_op, addr))
-        elif funct3 == RV_BLT:
-            ops_file.write(b_type('blt', full_op, addr))
-        elif funct3 == RV_BGE:
-            ops_file.write(b_type('bge', full_op, addr))
-        elif funct3 == RV_BLTU:
-            ops_file.write(b_type('bltu', full_op, addr))
-        elif funct3 == RV_BGEU:
-            ops_file.write(b_type('bgeu', full_op, addr))
-        else:
-            raise InvalidOpcode(f"bad funct3 at branch op: 0x{full_op:08x} (address 0x{addr:08x}).")
-
+        write_branch_op(ops_file, full_op, addr, funct3, funct7)
     elif opcode == RV_L:
-        if funct3 == RV_LB:
-            ops_file.write(load_type('lb', full_op))
-        elif funct3 == RV_LH:
-            ops_file.write(load_type('lh', full_op))
-        elif funct3 == RV_LW:
-            ops_file.write(load_type('lw', full_op))
-        elif funct3 == RV_LBU:
-            ops_file.write(load_type('lbu', full_op))
-        elif funct3 == RV_LHU:
-            ops_file.write(load_type('lhu', full_op))
-        else:
-            raise InvalidOpcode(f"bad funct3 at load op: 0x{full_op:08x} (address 0x{addr:08x}).")
-
+        write_load_op(ops_file, full_op, addr, funct3, funct7)
     elif opcode == RV_S:
-        if funct3 == RV_SB:
-            ops_file.write(s_type('sb', full_op))
-        elif funct3 == RV_SH:
-            ops_file.write(s_type('sh', full_op))
-        elif funct3 == RV_SW:
-            ops_file.write(s_type('sw', full_op))
-        else:
-            raise InvalidOpcode(f"bad funct3 at store op: 0x{full_op:08x} (address 0x{addr:08x}).")
+        write_store_op(ops_file, full_op, addr, funct3, funct7)
 
     elif opcode == RV_ALU_IMM:
-        if funct3 == RV_ADDI:
-            ops_file.write(i_type('addi', full_op))
-        elif funct3 == RV_SLTI:
-            ops_file.write(i_type('slti', full_op, dst_is_rs1=False))
-        elif funct3 == RV_SLTIU:
-            ops_file.write(i_type('sltiu', full_op, dst_is_rs1=False))
-        elif funct3 == RV_XORI:
-            ops_file.write(i_type('xori', full_op))
-        elif funct3 == RV_ORI:
-            ops_file.write(i_type('ori', full_op))
-        elif funct3 == RV_ANDI:
-            ops_file.write(i_type('andi', full_op))
-        elif funct3 == RV_SLLI and funct7 == RV_SLLI_FUNCT7:
-            ops_file.write(shift_imm_op('slli', full_op))
-        elif funct3 == RV_SRI and funct7 == RV_SRLI_FUNCT7:
-            ops_file.write(shift_imm_op('srli', full_op))
-        elif funct3 == RV_SRI and funct7 == RV_SRAI_FUNCT7:
-            ops_file.write(shift_imm_op('srai', full_op))
-        else:
-            raise InvalidOpcode(f"bad funct3/funct7 at alu_imm op: 0x{full_op:08x} (address 0x{addr:08x}).")
-
+        write_alu_imm_op(ops_file, full_op, addr, funct3, funct7)
     elif opcode == RV_ALU:
-        if funct3 == RV_ADD_SUB and funct7 == RV_ADD_FUNCT7:
-            ops_file.write(r_type('add', full_op))
-        elif funct3 == RV_ADD_SUB and funct7 == RV_SUB_FUNCT7:
-            ops_file.write(r_type('sub', full_op))
-        elif funct3 == RV_XOR and funct7 == RV_XOR_FUNCT7:
-            ops_file.write(r_type('xor', full_op))
-        elif funct3 == RV_OR and funct7 == RV_OR_FUNCT7:
-            ops_file.write(r_type('or', full_op))
-        elif funct3 == RV_AND and funct7 == RV_AND_FUNCT7:
-            ops_file.write(r_type('and', full_op))
-        elif funct3 == RV_SLT and funct7 == RV_SLT_FUNCT7:
-            ops_file.write(r_type('slt', full_op, dst_is_rs1=False))
-        elif funct3 == RV_SLTU and funct7 == RV_SLTU_FUNCT7:
-            ops_file.write(r_type('sltu', full_op, dst_is_rs1=False))
-        elif funct3 == RV_SLL and funct7 == RV_SLL_FUNCT7:
-            ops_file.write(r_type('sll', full_op))
-        elif funct3 == RV_SR and funct7 == RV_SRL_FUNCT7:
-            ops_file.write(r_type('srl', full_op))
-        elif funct3 == RV_SR and funct7 == RV_SRA_FUNCT7:
-            ops_file.write(r_type('sra', full_op))
+        if funct7 == RV32M_FUNCT7:
+            write_rv32m_op(ops_file, full_op, addr, funct3, funct7)
         else:
-            raise InvalidOpcode(f"bad funct3/funct7 at alu op: 0x{full_op:08x} (address 0x{addr:08x}).")
+            write_alu_op(ops_file, full_op, addr, funct3, funct7)
 
     elif opcode == RV_FENCE:
         if funct3 == RV_FENCE_FUNCT3:
@@ -396,9 +417,11 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
 
     elif opcode == RV_CALL:
         if full_op == RV_ECALL_FULL_OP:
-            raise InvalidOpcode(f"C2fj doesn't support ecall ops (newlib shouldn't have produced it) (address 0x{addr:08x}).")
+            raise InvalidOpcode(
+                f"C2fj doesn't support ecall ops (newlib shouldn't have produced it) (address 0x{addr:08x}).")
         elif full_op == RV_EBREAK_FULL_OP:
-            raise InvalidOpcode(f"C2fj doesn't support ebreak ops (newlib shouldn't have produced it) (address 0x{addr:08x}).")
+            raise InvalidOpcode(
+                f"C2fj doesn't support ebreak ops (newlib shouldn't have produced it) (address 0x{addr:08x}).")
         else:
             raise InvalidOpcode(f"bad instruction at env call/break op: 0x{full_op:08x} (address 0x{addr:08x}).")
 

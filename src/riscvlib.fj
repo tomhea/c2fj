@@ -311,6 +311,8 @@ ns riscv {
         .fast_alu
         .fast_slt
         .fast_sltu
+
+        .fast_rv32m
     }
 
     def fast_jump_to_pc > jump_to_pc {
@@ -651,6 +653,10 @@ ns riscv {
       do_add_to_pc:
         hex.add .HLEN, .regs.pc, .rs1
         stl.fret .ret
+    }
+
+    def fast_rv32m {
+
     }
 }
 

@@ -46,6 +46,12 @@ int calculate_int() {
     c2fj_print_char('n');
     c2fj_print_char('d');
     c2fj_print_char('\n');
+
+    c = 3;
+    d = 12;
+    c *= d;
+    a -= c;
+
     return a >> g;
 }
 
