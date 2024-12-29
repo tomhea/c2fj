@@ -3,7 +3,7 @@ RISCV_OPTIONS := -march=rv32im -mabi=ilp32 -specs=nosys.specs -specs=nano.specs 
 GCC_FLAGS := -O0 -fno-merge-constants
 LINKER_OPTIONS := -T linker_script.ld
 
-SOURCES := __init.S __init.c main.c
+SOURCES := c2fj_init.c main.c
 OBJECTS := $(SOURCES:.c=.o)
 
 all: |

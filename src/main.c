@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "debug_c2fj.h"
+#include "c2fj_syscall.h"
 
 
 int c = 0x34;
