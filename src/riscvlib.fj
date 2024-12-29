@@ -317,7 +317,8 @@ ns riscv {
         .fast_slt
         .fast_sltu
 
-        .fast_rv32m
+        .fast_mul
+        .fast_div_rem
     }
 
     def fast_jump_to_pc > jump_to_pc {
@@ -660,7 +661,7 @@ ns riscv {
         stl.fret .ret
     }
 
-    def fast_rv32m @ sign_extend_rs1, sign_extend_rs2, check_if_rs2_sign_extended, end_upper_mul\
+    def fast_mul @ sign_extend_rs1, sign_extend_rs2, check_if_rs2_sign_extended, end_upper_mul\
             < .ret, .rd, .rs1, .rs2 > do_mul, do_mulh, do_mulhu, do_mulhsu {
       do_mul:
         hex.mul .HLEN*2, .rd, .rs1, .rs2
@@ -689,6 +690,53 @@ ns riscv {
         hex.not .HLEN, .rs2+.HLEN*dw
 
       end_upper_mul:
+        stl.fret .ret
+    }
+
+    // Divides .rs1 by .rs2, stores the result in .rd and the reminder in .rs1.
+    // If divides by 0 - print error message and exit.
+    def fast_div_rem @ div0_exit_with_error, rem_result, rs1_neg, rs1_zpos, make_rem_zpos, make_rem_neg, return\
+            < .ret, .rd, .rs1, .rs2, .regs.pc\
+            > do_unsigned_div_rem, do_signed_div_rem {
+      div0_exit_with_error:
+        stl.output "\nMath error: Tried to divide "
+        hex.print_uint .HLEN, .rs1, 1, 1
+        stl.output " by 0.\n"
+        stl.output "  Current Address = "
+        hex.print_uint .HLEN, .regs.pc, 1, 1
+        stl.output ".\n  Finished with error.\n\n"
+        stl.loop
+
+      rem_result:
+        hex.vec .HLEN
+
+      do_unsigned_div_rem:
+        hex.div .HLEN, .HLEN, .rd, rem_result, .rs1, .rs2, div0_exit_with_error
+        ;return
+
+      do_signed_div_rem:
+        hex.idiv .HLEN, .HLEN, .rd, rem_result, .rs1, .rs2, div0_exit_with_error
+        ;return
+
+        // TODO fix idiv in fj, + fix signed_div here.
+
+//        hex.sign .HLEN, .rs1, rs1_neg, rs1_zpos
+//
+//      rs1_neg:
+//        hex.sign .HLEN, .rs2, return, make_rem_neg
+//      rs1_zpos:
+//        hex.sign .HLEN, .rs2, make_rem_zpos, return
+//
+//      make_rem_neg:
+//
+//        ;return
+//
+//      make_rem_zpos
+//
+//        ;return
+
+      return:
+        hex.mov .HLEN, .rs1, rem_result
         stl.fret .ret
     }
 }
@@ -1499,5 +1547,17 @@ ns riscv {
     }
     def mulhsu mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_mulhsu {
         .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_mulhsu
+    }
+    def div mov_from_rd, mov_to_rs1, xor_to_rs2 < .do_signed_div_rem {
+        .reg_reg_fast_op mov_from_rd, mov_to_rs1, xor_to_rs2, .do_signed_div_rem
+    }
+    def divu mov_from_rd, mov_to_rs1, xor_to_rs2 < .do_unsigned_div_rem {
+        .reg_reg_fast_op mov_from_rd, mov_to_rs1, xor_to_rs2, .do_unsigned_div_rem
+    }
+    def rem mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_signed_div_rem {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_signed_div_rem
+    }
+    def remu mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_unsigned_div_rem {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_unsigned_div_rem
     }
 }

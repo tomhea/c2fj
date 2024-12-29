@@ -58,11 +58,15 @@ RV_SRA_FUNCT7 = 0b0100000
 RV_OR_FUNCT7 = 0b0000000
 RV_AND_FUNCT7 = 0b0000000
 
-RV32M_FUNCT7 = 0b0000001  # TODO implement the 4 div/rem ops from RV32M.
+RV32M_FUNCT7 = 0b0000001
 RV_MUL = 0b000
 RV_MULH = 0b001
 RV_MULHSU = 0b010
 RV_MULHU = 0b011
+RV_DIV = 0b100
+RV_DIVU = 0b101
+RV_REM = 0b110
+RV_REMU = 0b111
 
 
 RV_FENCE = 0b0001111
@@ -384,9 +388,14 @@ def write_rv32m_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct
         ops_file.write(r_type('mulhsu', full_op, dst_is_rs1=False))
     elif funct3 == RV_MULHU:
         ops_file.write(r_type('mulhu', full_op, dst_is_rs1=False))
-
-    else:
-        raise InvalidOpcode(f"rv32m op not supported yet: 0x{full_op:08x} (address 0x{addr:08x}).")
+    elif funct3 == RV_DIV:
+        ops_file.write(r_type('div', full_op, dst_is_rs1=False))
+    elif funct3 == RV_DIVU:
+        ops_file.write(r_type('divu', full_op, dst_is_rs1=False))
+    elif funct3 == RV_REM:
+        ops_file.write(r_type('rem', full_op, dst_is_rs1=True))
+    elif funct3 == RV_REMU:
+        ops_file.write(r_type('remu', full_op, dst_is_rs1=True))
 
 
 def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:

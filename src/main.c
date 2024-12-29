@@ -52,6 +52,42 @@ int calculate_int() {
     c *= d;
     a -= c;
 
+    long long x = -3;
+    long long y = -3;
+    c2fj_print_register((x*y) >> 32);
+    c2fj_print_register((x*y) & 0xffffffff);
+
+
+    int rs1 = 7;
+    int rs2 = 3;
+    c2fj_print_char('\n');
+    c2fj_print_register(rs1 / rs2);
+    c2fj_print_register(rs1 % rs2);
+
+    rs1 = 7;
+    rs2 = -3;
+    c2fj_print_char('\n');
+    c2fj_print_register(rs1 / rs2);
+    c2fj_print_register(rs1 % rs2);
+
+    rs1 = -7;
+    rs2 = 3;
+    c2fj_print_char('\n');
+    c2fj_print_register(rs1 / rs2);
+    c2fj_print_register(rs1 % rs2);
+
+    rs1 = -7;
+    rs2 = -3;
+    c2fj_print_char('\n');
+    c2fj_print_register(rs1 / rs2);
+    c2fj_print_register(rs1 % rs2);
+
+    unsigned int u_rs1 = 7;
+    unsigned int u_rs2 = 3;
+    c2fj_print_char('\n');
+    c2fj_print_register(u_rs1 / u_rs2);
+    c2fj_print_register(u_rs1 % u_rs2);
+
     return a >> g;
 }
 
