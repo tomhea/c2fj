@@ -282,12 +282,17 @@ ns riscv {
       ret:
         ;0
 
-      rs1:
-        .regs.register
-      rs2:
-        .regs.register
-      rd:
-        .regs.register
+
+      rs1:  // most ops use the first .HLEN. mul ops use the extra .HLEN.
+        hex.vec 2*.HLEN
+      rs2:  // most ops use the first .HLEN. mul ops use the extra .HLEN.
+        hex.vec 2*.HLEN
+
+
+        hex.vec .HLEN
+      rd:  // most ops use the first .HLEN. mul ops use .HLEN extra before and after.
+        hex.vec 2*.HLEN
+
 
       mem_ptr:
         hex.vec w/4
@@ -655,8 +660,36 @@ ns riscv {
         stl.fret .ret
     }
 
-    def fast_rv32m {
+    def fast_rv32m @ sign_extend_rs1, sign_extend_rs2, check_if_rs2_sign_extended, end_upper_mul\
+            < .ret, .rd, .rs1, .rs2 > do_mul, do_mulh, do_mulhu, do_mulhsu {
+      do_mul:
+        hex.mul .HLEN*2, .rd, .rs1, .rs2
+        stl.fret .ret
 
+      do_mulh:
+        hex.sign .HLEN, .rs2, sign_extend_rs2, .do_mulhsu
+      sign_extend_rs2:
+        hex.not .HLEN, .rs2+.HLEN*dw  // sign extend to 64bits is like treating rs2 as signed.
+        ;.do_mulhsu
+
+      do_mulhsu:
+        hex.sign .HLEN, .rs1, sign_extend_rs1, .do_mulhu
+      sign_extend_rs1:
+        hex.not .HLEN, .rs1+.HLEN*dw  // sign extend to 64bits is like treating rs1 as signed.
+        ;.do_mulhu
+
+      do_mulhu:
+        hex.mul .HLEN*2, .rd - .HLEN*dw, .rs1, .rs2
+
+        hex.if0 .rs1+.HLEN*dw, check_if_rs2_sign_extended  // if rs1 wasn't sign extended, skip
+        hex.not .HLEN, .rs1+.HLEN*dw
+
+      check_if_rs2_sign_extended:
+        hex.if0 .rs2+.HLEN*dw, end_upper_mul  // if rs2 wasn't sign extended, skip
+        hex.not .HLEN, .rs2+.HLEN*dw
+
+      end_upper_mul:
+        stl.fret .ret
     }
 }
 
@@ -1453,5 +1486,18 @@ ns riscv {
     // rd := rs1 >> (rs2 % 32) [arithmetical shift]
     def sra mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_sra {
         .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_sra
+    }
+
+    def mul mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_mul {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_mul
+    }
+    def mulh mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_mulh {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_mulh
+    }
+    def mulhu mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_mulhu {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_mulhu
+    }
+    def mulhsu mov_from_rs1, mov_to_rs1, xor_to_rs2 < .do_mulhsu {
+        .reg_reg_fast_op mov_from_rs1, mov_to_rs1, xor_to_rs2, .do_mulhsu
     }
 }
