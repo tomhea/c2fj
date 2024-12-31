@@ -695,7 +695,7 @@ ns riscv {
 
     // Divides .rs1 by .rs2, stores the result in .rd and the reminder in .rs1.
     // If divides by 0 - print error message and exit.
-    def fast_div_rem @ div0_exit_with_error, rem_result, rs1_neg, rs1_zpos, make_rem_zpos, make_rem_neg, return\
+    def fast_div_rem @ div0_exit_with_error, rem_result, return\
             < .ret, .rd, .rs1, .rs2, .regs.pc\
             > do_unsigned_div_rem, do_signed_div_rem {
       div0_exit_with_error:
@@ -715,25 +715,8 @@ ns riscv {
         ;return
 
       do_signed_div_rem:
-        hex.idiv .HLEN, .HLEN, .rd, rem_result, .rs1, .rs2, div0_exit_with_error
+        hex.idiv .HLEN, .HLEN, .rd, rem_result, .rs1, .rs2, div0_exit_with_error, 1
         ;return
-
-        // TODO fix idiv in fj, + fix signed_div here.
-
-//        hex.sign .HLEN, .rs1, rs1_neg, rs1_zpos
-//
-//      rs1_neg:
-//        hex.sign .HLEN, .rs2, return, make_rem_neg
-//      rs1_zpos:
-//        hex.sign .HLEN, .rs2, make_rem_zpos, return
-//
-//      make_rem_neg:
-//
-//        ;return
-//
-//      make_rem_zpos
-//
-//        ;return
 
       return:
         hex.mov .HLEN, .rs1, rem_result
