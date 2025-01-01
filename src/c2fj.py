@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from typing import List, Optional
 
 from flipjump.utils.classes import PrintTimer
 
@@ -35,12 +36,13 @@ def compile_fj_to_fjm() -> None:
     )
 
 
-def run_fjm() -> None:
+def run_fjm(breakpoint_addresses: Optional[List[int]] = None, single_step: bool = False) -> None:
     flipjump.debug(
         fjm_path=BUILD_DIR / 'main.fjm',
         debugging_file=BUILD_DIR / 'debug.fjd',
-        last_ops_debugging_list_length=3000,
-        # breakpoints={"riscv.ADDR_00000014"},
+        last_ops_debugging_list_length=6000,
+        breakpoints_contains={"riscv.ADDR_"} if single_step else None,
+        breakpoints={f"riscv.ADDR_{addr:08X}" for addr in breakpoint_addresses} if breakpoint_addresses else None,
     )
 
 
