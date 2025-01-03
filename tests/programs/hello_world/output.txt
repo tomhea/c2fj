@@ -1,0 +1,2 @@
+Hello world
+Program exited with exit code 0x0.

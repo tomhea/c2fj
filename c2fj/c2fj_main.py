@@ -112,7 +112,7 @@ class FinishCompilingAfter(Enum):
 
 
 def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = False,
-         finish_compiling_after: str = FinishCompilingAfter.RUN.value) -> None:
+         finish_compiling_after: FinishCompilingAfter = FinishCompilingAfter.RUN) -> None:
     with get_build_directory(build_dir) as build_dir:
         compile_c_to_riscv(file, build_dir / BuildNames.ELF.value)
         if finish_compiling_after == FinishCompilingAfter.ELF:
@@ -132,8 +132,8 @@ def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = 
 @contextlib.contextmanager  # type: ignore
 def get_build_directory(build_dir: Union[None, str, Path]) -> Iterator[Path]:
     if build_dir is None:
-        with TemporaryDirectory() as build_dir:
-            yield Path(build_dir)
+        with TemporaryDirectory() as temp_dir:
+            yield Path(temp_dir)
         return
 
     build_dir = Path(build_dir)
@@ -161,7 +161,7 @@ def main() -> None:
     if not file.exists() or not file.is_file():
         raise FileNotFoundError(f"This isn't a file: {file}")
 
-    c2fj(file, args.build_dir, args.unify_fj, args.finish_after)
+    c2fj(file, args.build_dir, args.unify_fj, FinishCompilingAfter(args.finish_after))
 
 
 if __name__ == '__main__':
