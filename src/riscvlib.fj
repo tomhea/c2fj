@@ -23,10 +23,10 @@ ns riscv {
         }
     }
 
-    def init sbrk_initial_address {
+    def init {
         .regs.init
         .fast_macros
-        .init_sbrk_ptr sbrk_initial_address
+        .init_sbrk_ptr
     }
 
     ns regs {
@@ -166,9 +166,9 @@ ns riscv {
         }
     }
 
-    def init_sbrk_ptr sbrk_initial_address > sbrk_ptr {
+    def init_sbrk_ptr > sbrk_ptr {
       sbrk_ptr:
-        hex.vec .HLEN, sbrk_initial_address
+        hex.vec .HLEN, 0xfffff000
     }
 
 
@@ -232,10 +232,10 @@ ns riscv {
     }
 
 
-    def start entry_point, sbrk_initial_address {
+    def start entry_point {
         stl.startup_and_init_all            // inits everything flipjump needs
         ;entry_point                        // start executing riscv opcodes
-        .init sbrk_initial_address          // inits registers, constants, global code stubs
+        .init                               // inits registers, constants, global code stubs
     }
 
 
@@ -368,7 +368,6 @@ ns riscv {
         stl.fret .ret
     }
 
-    // TODO check actually works (for both read / write).
     def validate_mem_ptr_below_sbrk_ptr @ raise_error, end < .mem_ptr, .sbrk_ptr, .regs.pc {
         hex.cmp .HLEN, .mem_ptr, .sbrk_ptr, end, raise_error, raise_error
 

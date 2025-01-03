@@ -60,9 +60,9 @@ def write_open_riscv_namespace(file: TextIO) -> None:
     file.write(f"ns riscv {{\n\n\n")
 
 
-def write_init_riscv_ops(ops_file: TextIO, start_addr: int, heap_start_address: int) -> None:
+def write_init_riscv_ops(ops_file: TextIO, start_addr: int) -> None:
     ops_file.write(f"segment 0\n"
-                   f".start .{get_addr_label_name(start_addr)}, {hex(heap_start_address)}\n\n\n")
+                   f".start .{get_addr_label_name(start_addr)}\n\n\n")
 
 
 def write_close_riscv_namespace(file: TextIO) -> None:
@@ -107,7 +107,7 @@ def write_file_prefixes(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO, el
     for file in (mem_file, jmp_file, ops_file):
         write_open_riscv_namespace(file)
 
-    write_init_riscv_ops(ops_file, get_start_address(elf), get_symbol_value(elf, "_heap_start"))
+    write_init_riscv_ops(ops_file, get_start_address(elf))
 
 
 def write_file_suffixes(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO) -> None:
