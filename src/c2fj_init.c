@@ -8,15 +8,16 @@
 int main();
 
 extern uint32_t _stack_end;
+extern uint32_t _heap_start;
 
 
 caddr_t _sbrk(int incr) {
-    asm volatile ("1: jal %0, 1b+14" : "+r"(incr));
+    asm volatile ("1: jal %0, 1b+14" : "+r"(incr)::"memory");
     return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
 }
 
 void _exit(int status) {
-    asm volatile ("1: jal %0, 1b+10" ::"r"(status));
+    asm volatile ("1: jal %0, 1b+10" ::"r"(status):"memory");
     __builtin_unreachable();
 }
 
@@ -82,12 +83,12 @@ int _read(int file, char *ptr, int len) {
 }
 
 __attribute__((naked)) void _start(void) {
-    asm volatile ("la sp, _stack_end - 8");
+    asm volatile ("la sp, _stack_end - 8":::"memory");
+    _sbrk((int32_t)&_heap_start - (int32_t)_sbrk(0));
 
     int status = main();
 
     _exit(status);
 
-    /* Infinite loop */
     while (1);
 }
