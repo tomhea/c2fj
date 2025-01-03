@@ -53,7 +53,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-src/.idea/
-src/cmake-build-debug/
+c2fj/.idea/
+c2fj/cmake-build-debug/
 *pyc
 build/

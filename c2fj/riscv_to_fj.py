@@ -1,8 +1,9 @@
 from pathlib import Path
-import elftools.elf.elffile  # type: ignore
 from typing import TextIO, Iterator, Tuple
 
-from riscv_instructions import write_op
+import elftools.elf.elffile  # type: ignore
+
+from c2fj.riscv_instructions import write_op
 
 
 def get_symbol_value(elf: elftools.elf.elffile.ELFFile, symbol_name: str) -> int:
@@ -41,7 +42,7 @@ def write_memory_data(mem_file: TextIO, data: bytes, virtual_address: int, reser
 
 
 def ops_and_addr_iterator(data: bytes, virtual_address: int) -> Iterator[Tuple[int, int]]:
-    return ((int.from_bytes(data[i:i+4], 'little'), virtual_address + i)
+    return ((int.from_bytes(data[i:i + 4], 'little'), virtual_address + i)
             for i in range(0, len(data), 4))
 
 
@@ -103,7 +104,8 @@ def get_start_address(elf: elftools.elf.elffile.ELFFile) -> int:
     return elf['e_entry']
 
 
-def write_file_prefixes(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO, elf: elftools.elf.elffile.ELFFile) -> None:
+def write_file_prefixes(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO,
+                        elf: elftools.elf.elffile.ELFFile) -> None:
     for file in (mem_file, jmp_file, ops_file):
         write_open_riscv_namespace(file)
 
