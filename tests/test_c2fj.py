@@ -29,6 +29,7 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
     "hello_world",
     "hello_math",
     "hello_input",
+    "hello_input_number",
     "riscv_ops__all_c_syscalls",
     "riscv_ops__alu",
     "riscv_ops__alu_imm",
