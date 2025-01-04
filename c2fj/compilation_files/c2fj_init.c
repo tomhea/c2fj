@@ -12,12 +12,12 @@ extern uint32_t _heap_start;
 
 
 caddr_t _sbrk(int incr) {
-    asm volatile ("1: jal %0, 1b+14" : "+r"(incr)::"memory");
+    asm volatile ("jal %0, .+14" : "+r"(incr)::"memory");
     return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
 }
 
 void _exit(int status) {
-    asm volatile ("1: jal %0, 1b+10" ::"r"(status):"memory");
+    asm volatile ("jal %0, .+10" ::"r"(status):"memory");
     __builtin_unreachable();
 }
 

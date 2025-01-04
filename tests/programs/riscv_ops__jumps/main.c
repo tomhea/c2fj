@@ -21,7 +21,7 @@ int main() {
         "1: sub a0, a0, a1\n"
         "lui a1, 0x123\n"
         "sub a1, a1, a0\n"
-        "2: jal a1, 2b+22\n"    // prints 0x8
+        "jal a1, .+22\n"    // prints 0x8
     :::"memory");
     c2fj_print_char('\n');
 
@@ -42,12 +42,21 @@ int main() {
         "addi a2, a2, 1\n"
         "addi a2, a2, 1\n"
         "addi a2, a2, 1\n"
-        "3: jal a2, 3b+22\n"    // prints 0x5
+        "jal a2, .+22\n"    // prints 0x5
         "sub a2, a0, a1\n"
-        "4: jal a2, 4b+22\n"    // prints 0x10
+        "jal a2, .+22\n"    // prints 0x10
     :::"memory");
     c2fj_print_char('\n');
 
+//        asm volatile (
+//        "xor a2, a2, a2\n"
+//        "lui a0, 0x123\n"
+//        "lui a1, 0x123\n"
+//        "beq a0, a1, 5f\n"
+//        "lui a2, 0x123"
+//        "5:"
+//    :::"memory");
+//    c2fj_print_char('\n');
 
     return 0;
 }
