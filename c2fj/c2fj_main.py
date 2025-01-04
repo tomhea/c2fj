@@ -16,7 +16,7 @@ COMPILATION_FILES_DIR = Path(__file__).parent / "compilation_files"
 
 C2FJ_MAKE_VARS = {
     'C2FJ_GCC_OPTIONS': '-march=rv32im -mabi=ilp32 -specs=nosys.specs -specs=nano.specs '
-                        '-nostartfiles -fno-merge-constants',
+                        '-nostartfiles -fno-merge-constants -fno-toplevel-reorder -fdata-sections -ffunction-sections',
     'C2FJ_LINKER_SCRIPT': f'{COMPILATION_FILES_DIR / "linker_script.ld"}',
     'C2FJ_SOURCES': f'{COMPILATION_FILES_DIR / "c2fj_init.c"}',
     'C2FJ_INCLUDE_DIRS': f'{COMPILATION_FILES_DIR / "include"}',
@@ -112,7 +112,8 @@ class FinishCompilingAfter(Enum):
 
 
 def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = False,
-         finish_compiling_after: FinishCompilingAfter = FinishCompilingAfter.RUN) -> None:
+         finish_compiling_after: FinishCompilingAfter = FinishCompilingAfter.RUN,
+         breakpoint_addresses: Optional[List[int]] = None, single_step: bool = False) -> None:
     with get_build_directory(build_dir) as build_dir:
         compile_c_to_riscv(file, build_dir / BuildNames.ELF.value)
         if finish_compiling_after == FinishCompilingAfter.ELF:
@@ -126,17 +127,17 @@ def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = 
         if finish_compiling_after == FinishCompilingAfter.FJM:
             return
 
-        run_fjm(build_dir)
+        run_fjm(build_dir, breakpoint_addresses=breakpoint_addresses, single_step=single_step)
 
 
 @contextlib.contextmanager  # type: ignore
 def get_build_directory(build_dir: Union[None, str, Path]) -> Iterator[Path]:
     if build_dir is None:
         with TemporaryDirectory() as temp_dir:
-            yield Path(temp_dir)
+            yield Path(temp_dir).absolute()
         return
 
-    build_dir = Path(build_dir)
+    build_dir = Path(build_dir).absolute()
     if not build_dir.exists() or not build_dir.is_dir():
         raise NotADirectoryError(f"This isn't a directory: {build_dir}")
 
@@ -146,22 +147,28 @@ def get_build_directory(build_dir: Union[None, str, Path]) -> Iterator[Path]:
 
 def main() -> None:
     argument_parser = argparse.ArgumentParser('c2fj', description='Compile C to fj')
-    argument_parser.add_argument('file', help=f'Can be a makefile, '
+    argument_parser.add_argument('file', metavar='PATH', help=f'Can be a makefile, '
                                               f'a single c file (ends with {" ".join(C_EXTENSIONS)}), '
                                               f'or a compiled elf file (ends with {" ".join(ELF_EXTENSIONS)})')
-    argument_parser.add_argument('build_dir', default=None,
+    argument_parser.add_argument('--build_dir', metavar='PATH', default=None,
                                  help='If specified, the builds will be stored in this directory')
     argument_parser.add_argument('--unify_fj', '-u', action='store_true',
                                  help=f'Unify the build fj files into a single "{BuildNames.UNIFIED_FJ.value}" file')
-    argument_parser.add_argument('--finish_after', '-f', default=FinishCompilingAfter.RUN.value,
-                                 choices=[e.value for e in FinishCompilingAfter], )
+    argument_parser.add_argument('--finish_after', '-f', metavar='PHASE',
+                                 default=FinishCompilingAfter.RUN.value,
+                                 choices=[e.value for e in FinishCompilingAfter])
+    argument_parser.add_argument('--breakpoints', '-b', metavar='ADDR', nargs='+', default=None,
+                                 type=lambda s: int(s, 0), help='breakpoint addresses')
+    argument_parser.add_argument('--single_step', '-s', action='store_true',
+                                 help='Stop at the start of every riscv opcode')
     args = argument_parser.parse_args()
 
     file = Path(args.file)
     if not file.exists() or not file.is_file():
         raise FileNotFoundError(f"This isn't a file: {file}")
 
-    c2fj(file, args.build_dir, args.unify_fj, FinishCompilingAfter(args.finish_after))
+    c2fj(file.absolute(), args.build_dir, args.unify_fj, FinishCompilingAfter(args.finish_after),
+         args.breakpoints, args.single_step)
 
 
 if __name__ == '__main__':

@@ -397,6 +397,15 @@ def write_rv32m_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct
         ops_file.write(r_type('remu', full_op, dst_is_rs1=True))
 
 
+def write_op_safe(ops_file: TextIO, full_op: int, addr: int, error_on_unimplemented_op: bool):
+    try:
+        write_op(ops_file, full_op, addr)
+    except InvalidOpcode:
+        if error_on_unimplemented_op:
+            raise
+        ops_file.write('riscv.unimplemented_op\n')
+
+
 def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
     opcode = full_op & 0x7f
     funct3 = (full_op >> 12) & 7

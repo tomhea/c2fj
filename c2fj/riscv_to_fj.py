@@ -3,7 +3,7 @@ from typing import TextIO, Iterator, Tuple
 
 import elftools.elf.elffile  # type: ignore
 
-from c2fj.riscv_instructions import write_op
+from c2fj.riscv_instructions import write_op_safe
 
 
 def get_symbol_value(elf: elftools.elf.elffile.ELFFile, symbol_name: str) -> int:
@@ -46,12 +46,13 @@ def ops_and_addr_iterator(data: bytes, virtual_address: int) -> Iterator[Tuple[i
             for i in range(0, len(data), 4))
 
 
-def write_ops_and_jumps(ops_file: TextIO, jmp_file: TextIO, data: bytes, virtual_address: int) -> None:
+def write_ops_and_jumps(ops_file: TextIO, jmp_file: TextIO, data: bytes, virtual_address: int,
+                        error_on_unimplemented_op: bool = False) -> None:
     jmp_file.write(f'segment .JMP + 0x{virtual_address:08x}/4*dw\n')
     for op, addr in ops_and_addr_iterator(data, virtual_address):
         write_jump_to_addr_label(jmp_file, addr)
         write_declare_addr_label(ops_file, addr)
-        write_op(ops_file, op, addr)
+        write_op_safe(ops_file, op, addr, error_on_unimplemented_op)
 
     jmp_file.write(f'\n\n')
     ops_file.write(f'\n\n')

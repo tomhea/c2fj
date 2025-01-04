@@ -75,9 +75,13 @@ int _read(int file, char *ptr, int len) {
         return -1;
     }
 
+    char* start_ptr = ptr;
     char* end_ptr = ptr + len;
     for (; ptr < end_ptr; ptr++) {
         *ptr = c2fj_getc();
+        if (*ptr == '\n') {
+            return (ptr - start_ptr) + 1;
+        }
     }
     return len;
 }

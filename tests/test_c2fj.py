@@ -21,13 +21,13 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
             expected_output=expected_output_file.read_text().encode(IO_BYTES_ENCODING),
             should_raise_assertion_error=True,
             debugging_file=build_dir / BuildNames.FJ_DEBUG.value,
-
         )
 
 
 @pytest.mark.parametrize("directory_name", [
     "sanity",
-    "hello_world"
+    "hello_world",
+    "hello_input",
 ])
 def test_c2fj_default(directory_name: str) -> None:
     directory = PROGRAMS_DIR / directory_name

@@ -301,6 +301,7 @@ ns riscv {
         .moves_to_from_middle_regs
         .fast_calculate_mem_ptr
         .fast_debug_print_regs
+        .fast_unimplemented_op
 
         .fast_add_to_pc
 
@@ -320,6 +321,18 @@ ns riscv {
         .fast_mul
         .fast_div_rem
     }
+
+    def fast_unimplemented_op < .regs.pc > do_unimplemented_op {
+      do_unimplemented_op:
+        stl.output "Executed unimplemented op in address "
+        hex.print_uint .HLEN, .regs.pc, 1, 1
+        stl.output "\nFinished with error.\n\n"
+        stl.loop
+    }
+    def unimplemented_op < .do_unimplemented_op {
+        ;.do_unimplemented_op
+    }
+
 
     def fast_jump_to_pc > jump_to_pc {
       jump_to_pc:
