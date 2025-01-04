@@ -150,16 +150,16 @@ def main() -> None:
     argument_parser.add_argument('file', metavar='PATH', help=f'Can be a makefile, '
                                               f'a single c file (ends with {" ".join(C_EXTENSIONS)}), '
                                               f'or a compiled elf file (ends with {" ".join(ELF_EXTENSIONS)})')
-    argument_parser.add_argument('--build_dir', metavar='PATH', default=None,
+    argument_parser.add_argument('--build-dir', metavar='PATH', default=None,
                                  help='If specified, the builds will be stored in this directory')
-    argument_parser.add_argument('--unify_fj', '-u', action='store_true',
+    argument_parser.add_argument('--unify-fj', '-u', action='store_true',
                                  help=f'Unify the build fj files into a single "{BuildNames.UNIFIED_FJ.value}" file')
-    argument_parser.add_argument('--finish_after', '-f', metavar='PHASE',
+    argument_parser.add_argument('--finish-after', '-f', metavar='PHASE',
                                  default=FinishCompilingAfter.RUN.value,
                                  choices=[e.value for e in FinishCompilingAfter])
     argument_parser.add_argument('--breakpoints', '-b', metavar='ADDR', nargs='+', default=None,
                                  type=lambda s: int(s, 0), help='breakpoint addresses')
-    argument_parser.add_argument('--single_step', '-s', action='store_true',
+    argument_parser.add_argument('--single-step', '-s', action='store_true',
                                  help='Stop at the start of every riscv opcode')
     args = argument_parser.parse_args()
 
