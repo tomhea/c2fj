@@ -21,7 +21,7 @@
 #define __FORCE_INLINE static __attribute__((always_inline)) inline
 
 
-__FORCE_INLINE void c2fj_print_registers(){
+__FORCE_INLINE void c2fj_print_registers() {
     asm volatile ("jal x0, .+18":::"memory");
 }
 

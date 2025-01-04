@@ -48,7 +48,7 @@ int _getpid(void) {
 }
 
 int _write(int file, const char *ptr, int len) {
-    if ((file != 1) && (file != 2) && (file != 3)) {
+    if ((file != 1) && (file != 2)) {
         return -1;
     }
 

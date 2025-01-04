@@ -1,1 +1,51 @@
-Program exited with exit code 0x0.
+debug_p00
+debug_p01
+debug_p3A
+debug_pA3
+debug_pFF
+
+Char!
+Y
+Value of register: 0x123456
+Value of register: 0x123455
+N
+
+Value of register: 0xFFFFF124
+Value of register: 0x0
+Value of register: 0xFFFFFFFF
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0xFFFFFFFF
+
+Value of register: 0xFFFFFFFF
+Hi1
+Value of register: 0x4
+Hi2
+Value of register: 0x4
+Value of register: 0xFFFFFFFF
+
+Yooo
+Value of register: 0x0
+
+Value of register: 0x0
+Yeah
+Me!
+
+Value of register: 0x0
+
+Hell
+Value of register: 0x4
+o all! That's me
+
+Value of register: 0x11
+o all! That's me
+
+Value of register: 0xFFFFFFFF
+Yoo
+l! That's me
+
+Value of register: 0x4
+
+Program exited with exit code 0x7.

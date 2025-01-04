@@ -31,6 +31,14 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
     "hello_math",
     "hello_input",
     "hello_input_number",
+])
+def test_c2fj_c_file(directory_name: str) -> None:
+    directory = PROGRAMS_DIR / directory_name
+    run_c2fj_test(directory / "main.c", directory / "input.txt", directory / "output.txt")
+
+
+@pytest.mark.parametrize("directory_name", [
+    "multiple_files",
     "riscv_ops__all_c_syscalls",
     "riscv_ops__alu",
     "riscv_ops__alu_imm",
@@ -38,11 +46,6 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
     "riscv_ops__memory",
     "riscv_ops__rv32m",
 ])
-def test_c2fj_default(directory_name: str) -> None:
+def test_c2fj_makefile(directory_name: str):
     directory = PROGRAMS_DIR / directory_name
-    run_c2fj_test(directory / "main.c", directory / "input.txt", directory / "output.txt")
-
-
-def test_c2fj_makefile_sanity():
-    directory = PROGRAMS_DIR / "multiple_files"
     run_c2fj_test(directory / "Makefile", directory / "input.txt", directory / "output.txt")
