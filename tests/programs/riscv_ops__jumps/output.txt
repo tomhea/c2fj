@@ -1,1 +1,10 @@
+Value of register: 0x12345000
+Value of register: 0xABCDE000
+Value of register: 0x0
+
+Value of register: 0x8
+
+Value of register: 0x5
+Value of register: 0x10
+
 Program exited with exit code 0x0.
