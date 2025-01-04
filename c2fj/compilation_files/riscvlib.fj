@@ -648,7 +648,7 @@ ns riscv {
         hex.cmp .HLEN, .rs1, .rs2, take_jump, dont_jump, dont_jump
 
       do_bgeu:
-        hex.cmp .HLEN, .rs1, .rs2, dont_jump, dont_jump, take_jump
+        hex.cmp .HLEN, .rs1, .rs2, dont_jump, take_jump, take_jump
 
       do_blt:
         hex.sub .HLEN, .rs1, .rs2

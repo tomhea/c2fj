@@ -7,4 +7,53 @@ Value of register: 0x8
 Value of register: 0x5
 Value of register: 0x10
 
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x1
+
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x1
+
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+
 Program exited with exit code 0x0.
