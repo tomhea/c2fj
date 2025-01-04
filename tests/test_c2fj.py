@@ -28,6 +28,12 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
     "sanity",
     "hello_world",
     "hello_input",
+    "riscv_ops__all_c_syscalls",
+    "riscv_ops__alu",
+    "riscv_ops__alu_imm",
+    "riscv_ops__jumps",
+    "riscv_ops__memory",
+    "riscv_ops__rv32m",
 ])
 def test_c2fj_default(directory_name: str) -> None:
     directory = PROGRAMS_DIR / directory_name
