@@ -27,6 +27,7 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
 @pytest.mark.parametrize("directory_name", [
     "sanity",
     "hello_world",
+    "hello_math",
     "hello_input",
     "riscv_ops__all_c_syscalls",
     "riscv_ops__alu",
