@@ -48,7 +48,6 @@ asm volatile (
 
 
 int main() {
-    // TODO test all 6 branch opcodes.
     int32_t val;
 
     asm volatile ("lui %0, 0x12345\n":"=r"(val)::"memory");

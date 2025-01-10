@@ -326,8 +326,5 @@ int main() {
     test_shifts();
     test_slt();
 
-    // TODO test sub too.
-    // TODO think of special cases to test with reg OP reg.
-
     return 0;
 }
