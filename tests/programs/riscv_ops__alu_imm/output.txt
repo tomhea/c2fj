@@ -1,1 +1,85 @@
+Value of register: 0x12345789
+Value of register: 0x12345567
+Value of register: 0x12345678
+Value of register: 0x12344FFF
+Value of register: 0x111
+
+Value of register: 0xEDCBA987
+Value of register: 0xEDCBA988
+Value of register: 0x12345678
+Value of register: 0x1234574D
+
+Value of register: 0xFFFFFFFF
+Value of register: 0xFFFFFFF8
+Value of register: 0x12345678
+Value of register: 0x1234577D
+
+Value of register: 0x12345678
+Value of register: 0x12345670
+Value of register: 0x0
+Value of register: 0x30
+
+Value of register: 0x12345678
+Value of register: 0x2468ACF0
+Value of register: 0x23456780
+Value of register: 0x468ACF00
+Value of register: 0x80000000
+Value of register: 0x0
+
+Value of register: 0x12345678
+Value of register: 0x91A2B3C
+Value of register: 0x1234567
+Value of register: 0x91A2B3
+Value of register: 0x1
+Value of register: 0x0
+
+Value of register: 0x12345678
+Value of register: 0x91A2B3C
+Value of register: 0x1234567
+Value of register: 0x91A2B3
+Value of register: 0x1
+Value of register: 0x0
+
+Value of register: 0x87654321
+Value of register: 0xECA8642
+Value of register: 0x76543210
+Value of register: 0xECA86420
+Value of register: 0x10000000
+Value of register: 0x80000000
+
+Value of register: 0x87654321
+Value of register: 0x43B2A190
+Value of register: 0x8765432
+Value of register: 0x43B2A19
+Value of register: 0x8
+Value of register: 0x1
+
+Value of register: 0x87654321
+Value of register: 0xC3B2A190
+Value of register: 0xF8765432
+Value of register: 0xFC3B2A19
+Value of register: 0xFFFFFFF8
+Value of register: 0xFFFFFFFF
+
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x1
+
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x1
+
+Value of register: 0x1
+Value of register: 0x1
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x1
+Value of register: 0x0
+Value of register: 0x0
+
 Program exited with exit code 0x0.

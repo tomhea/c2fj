@@ -3,6 +3,7 @@
 
 
 #define PRINT_A2 "jal a2, .+22\n"
+#define PRINT_LN "jal a2, .+3042\n"
 
 
 int main() {
@@ -22,6 +23,7 @@ int main() {
         PRINT_A2
         "lbu a2, 4(x2)\n"
         PRINT_A2
+        PRINT_LN
 
         "lui a0, 0xDEADC\n"
         "addi a0, a0, 0xEEF-0x1000\n"
@@ -37,6 +39,7 @@ int main() {
         PRINT_A2
         "lbu a2, 4(x2)\n"
         PRINT_A2
+        PRINT_LN
 
         "lui a0, 0x12345\n"
         "addi a0, a0, 0x678\n"
@@ -46,6 +49,7 @@ int main() {
         "sh a0, 6(x2)\n"
         "lw a2, 4(x2)\n"
         PRINT_A2
+        PRINT_LN
 
         "lui a0, 0xDEADC\n"
         "addi a0, a0, 0xEEF-0x1000\n"
@@ -55,6 +59,7 @@ int main() {
         "sb a0, 7(x2)\n"
         "lw a2, 4(x2)\n"
         PRINT_A2
+        PRINT_LN
 
         "addi x2, x2, +1000\n"
     :::"memory");
