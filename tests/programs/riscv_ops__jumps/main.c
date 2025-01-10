@@ -8,7 +8,7 @@
 /// Compares in this order beq,bne, blt,bge, bltu,bgeu
 /// Foreach: print 1 if taken, 0 if not taken.
 void compare_with_numbers(int32_t a0, int32_t a1) {
-asm volatile (
+    asm volatile (
         "mv a0, %0\n"
         "mv a1, %1\n"
 

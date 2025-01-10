@@ -1,1 +1,56 @@
+Value of register: 0x1234320
+Value of register: 0x0
+Value of register: 0x0
+Value of register: 0x0
+
+Value of register: 0x87654320
+Value of register: 0x1234567
+Value of register: 0x1234567
+Value of register: 0x1234567
+
+Value of register: 0x2468ACF0
+Value of register: 0xFFFFFFF8
+Value of register: 0xFFFFFFF8
+Value of register: 0x76543208
+
+Value of register: 0x2468ACF0
+Value of register: 0xFFFFFFF8
+Value of register: 0x76543208
+Value of register: 0x76543208
+
+Value of register: 0x8E749448
+Value of register: 0x36B1B
+Value of register: 0x89AF3903
+Value of register: 0x89A7D3C0
+
+Value of register: 0x1
+Value of register: 0x8
+Value of register: 0x1
+Value of register: 0x8
+
+Value of register: 0xFFFFFFFF
+Value of register: 0x8
+Value of register: 0x0
+Value of register: 0x14
+
+Value of register: 0xFFFFFFFF
+Value of register: 0xFFFFFFF8
+Value of register: 0x15555553
+Value of register: 0x8
+
+Value of register: 0x1
+Value of register: 0xFFFFFFF8
+Value of register: 0x0
+Value of register: 0xFFFFFFEC
+
+Value of register: 0xFFFFFFFA
+Value of register: 0xF49F49F1
+Value of register: 0x7
+Value of register: 0x7F6E5D9
+
+Value of register: 0x658FC77
+Value of register: 0xFFFFFFF6
+Value of register: 0x0
+Value of register: 0x87654321
+
 Program exited with exit code 0x0.
