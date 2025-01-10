@@ -1,1 +1,15 @@
+Value of register: 0x12345678
+Value of register: 0x5678
+Value of register: 0x5678
+Value of register: 0x78
+Value of register: 0x78
+Value of register: 0xDEADBEEF
+Value of register: 0xFFFFBEEF
+Value of register: 0xBEEF
+Value of register: 0xFFFFFFEF
+Value of register: 0xEF
+Value of register: 0xDEAD5678
+Value of register: 0x56785678
+Value of register: 0x567856EF
+Value of register: 0xEF7856EF
 Program exited with exit code 0x0.
