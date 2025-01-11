@@ -83,21 +83,21 @@ int _getc(FILE* file) {
 }
 
 
-//int _read(int file, char *ptr, int len) {
-//    if (file != 0) {
-//        return -1;
-//    }
-//
-//    char* start_ptr = ptr;
-//    char* end_ptr = ptr + len;
-//    for (; ptr < end_ptr; ptr++) {
-//        *ptr = c2fj_getc();
-//        if (*ptr == '\n') {
-//            return (ptr - start_ptr) + 1;
-//        }
-//    }
-//    return len;
-//}
+int read(int file, char *ptr, int len) {
+    if (file != 0) {
+        return -1;
+    }
+
+    char* start_ptr = ptr;
+    char* end_ptr = ptr + len;
+    for (; ptr < end_ptr; ptr++) {
+        *ptr = c2fj_getc();
+        if (*ptr == '\n') {
+            return (ptr - start_ptr) + 1;
+        }
+    }
+    return len;
+}
 
 
 static FILE __stdin = FDEV_SETUP_STREAM(NULL, _getc, NULL, __SRD);

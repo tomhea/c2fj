@@ -12,12 +12,12 @@ extern int _lseek(int file, int ptr, int dir);
 extern void _kill(int pid, int sig);
 extern int _getpid(void);
 extern void _exit(int status);
-int _write(int file, const char *ptr, int len);
+int write(int file, const char *ptr, int len);
 int puts(const char *str);
-int _read(int file, char *ptr, int len);
+int read(int file, char *ptr, int len);
 
 
-int main() {
+int main() {  // TODO update tests according to new picolib functions
     // Tested any function in `c2fj_init.c`, `c2fj_syscall.h`, but the c2fj_print_registers()
 
     c2fj_debug_p(0);
@@ -71,13 +71,13 @@ int main() {
 
     c2fj_print_char('\n');
 
-    int res_w0 = _write(0, "Hi0\n", 4);
+    int res_w0 = write(0, "Hi0\n", 4);
     c2fj_print_register(res_w0);
-    int res_w1 = _write(1, "Hi1\n", 4);
+    int res_w1 = write(1, "Hi1\n", 4);
     c2fj_print_register(res_w1);
-    int res_w2 = _write(2, "Hi2\n", 4);
+    int res_w2 = write(2, "Hi2\n", 4);
     c2fj_print_register(res_w2);
-    int res_w3 = _write(3, "Hi3\n", 4);
+    int res_w3 = write(3, "Hi3\n", 4);
     c2fj_print_register(res_w3);
     c2fj_print_char('\n');
 
@@ -90,19 +90,19 @@ int main() {
     c2fj_print_char('\n');
 
     char buf[20] = {0};
-    int res_r0 = _read(0, buf, 4);
+    int res_r0 = read(0, buf, 4);
     puts(buf);
     c2fj_print_register(res_r0);
 
-    int res_r1 = _read(0, buf, 20);
+    int res_r1 = read(0, buf, 20);
     puts(buf);
     c2fj_print_register(res_r1);
 
-    int res_r2 = _read(1, buf, 4);
+    int res_r2 = read(1, buf, 4);
     puts(buf);
     c2fj_print_register(res_r2);
 
-    int res_r3 = _read(0, buf, 4);
+    int res_r3 = read(0, buf, 4);
     puts(buf);
     c2fj_print_register(res_r3);
 
