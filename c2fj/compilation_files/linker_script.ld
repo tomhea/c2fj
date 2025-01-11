@@ -60,9 +60,8 @@ SECTIONS
     .heap (NOLOAD):
     {
         . = ALIGN(8);
-        _heap_start = . ;
+        __heap_start = . ;
         . = ALIGN(MEMORY_SIZE - GUARD_SEGMENT_SIZE);
+        __heap_end = . ;
     } > ram
-
-
 }

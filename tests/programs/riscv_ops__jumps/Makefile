@@ -1,4 +1,4 @@
-GCC := /opt/riscv32/bin/riscv32-unknown-elf-gcc
+GCC := riscv64-unknown-elf-gcc
 GCC_FLAGS := -O0
 
 SOURCES := $(C2FJ_SOURCES) main.c

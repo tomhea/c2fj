@@ -15,7 +15,7 @@ from c2fj.riscv_to_fj import create_fj_files_from_riscv_elf
 COMPILATION_FILES_DIR = Path(__file__).parent / "compilation_files"
 
 C2FJ_MAKE_VARS = {
-    'C2FJ_GCC_OPTIONS': '-march=rv32im -mabi=ilp32 -specs=nosys.specs -specs=nano.specs '
+    'C2FJ_GCC_OPTIONS': '-march=rv32im -mabi=ilp32 --specs=picolibc.specs --crt0=hosted '
                         '-nostartfiles -fno-merge-constants -fno-toplevel-reorder -fdata-sections -ffunction-sections',
     'C2FJ_LINKER_SCRIPT': f'{COMPILATION_FILES_DIR / "linker_script.ld"}',
     'C2FJ_SOURCES': f'{COMPILATION_FILES_DIR / "c2fj_init.c"}',
