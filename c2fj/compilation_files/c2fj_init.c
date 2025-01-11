@@ -107,14 +107,14 @@ FILE *const stdout = &__stdout;
 __strong_reference(stdout, stderr);
 
 
-int fgetc(FILE* file) {
-    if (file != stdin) {
-        return EOF;
-    }
-
-    (void) file;
-    return c2fj_getc();
-}
+//int fgetc(FILE* file) {  // TODO fix to not miss first character.
+//    if (file != stdin) {
+//        return EOF;
+//    }
+//
+//    (void) file;
+//    return c2fj_getc();
+//}
 
 int fputc(int c, FILE* file) {
     if (file != stdout && file != stderr) {
