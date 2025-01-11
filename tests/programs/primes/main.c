@@ -4,6 +4,7 @@
 
 
 int main() {
+    printf("Calculate primes up to: ");
     int max_number;
     scanf("%d", &max_number);
 

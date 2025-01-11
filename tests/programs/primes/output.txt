@@ -1,4 +1,4 @@
-2
+Calculate primes up to: 2
 3
 5
 7
