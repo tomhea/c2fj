@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from typing import List, Optional, Iterator, Union
 
 import flipjump
-from flipjump.utils.classes import PrintTimer
+from flipjump.utils import PrintTimer
 
 from c2fj.riscv_to_fj import create_fj_files_from_riscv_elf
 
