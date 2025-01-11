@@ -23,7 +23,7 @@ jobs:
           pip install .[tests]
       - name: Install compilation dependencies
         run: |
-          sudo apt-get -y picolibc-riscv64-unknown-elf
+          sudo apt-get install -y picolibc-riscv64-unknown-elf
       - name: Test pytest
         run: |
           pytest -n auto -vv --junitxml=./run-test-results.xml
