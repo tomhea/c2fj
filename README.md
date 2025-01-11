@@ -79,7 +79,7 @@ ELF_OUT_PATH
 
 An example Makefile:
 ```makefile
-GCC := /opt/riscv32/bin/riscv32-unknown-elf-gcc
+GCC := riscv64-unknown-elf-gcc
 GCC_FLAGS := -O3
 
 SOURCES := $(C2FJ_SOURCES) main.c globals.c calculate_int.c

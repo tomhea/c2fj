@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -8,7 +9,7 @@
 int main();
 
 extern uint32_t _stack_end;
-extern uint32_t _heap_start;
+extern uint32_t __heap_start;
 
 
 caddr_t _sbrk(int incr) {
@@ -47,7 +48,7 @@ int _getpid(void) {
     return -1;
 }
 
-int _write(int file, const char *ptr, int len) {
+int write(int file, const char *ptr, int len) {
     if ((file != 1) && (file != 2)) {
         return -1;
     }
@@ -62,7 +63,7 @@ int _write(int file, const char *ptr, int len) {
 
 int puts(const char *str) {
     int len = strlen(str);
-    if (_write(1, str, len) != len) {
+    if (write(1, str, len) != len) {
         return -1;
     }
 
@@ -70,7 +71,19 @@ int puts(const char *str) {
     return 0;
 }
 
-int _read(int file, char *ptr, int len) {
+int _putc(char c, FILE* file) {
+    (void) file;
+    c2fj_putc(c);
+    return c;
+}
+
+int _getc(FILE* file) {
+    (void) file;
+    return c2fj_getc();
+}
+
+
+int read(int file, char *ptr, int len) {
     if (file != 0) {
         return -1;
     }
@@ -86,9 +99,36 @@ int _read(int file, char *ptr, int len) {
     return len;
 }
 
+
+static FILE __stdin = FDEV_SETUP_STREAM(NULL, _getc, NULL, __SRD);
+static FILE __stdout = FDEV_SETUP_STREAM(_putc, NULL, NULL, __SWR);
+FILE *const stdin = &__stdin;
+FILE *const stdout = &__stdout;
+__strong_reference(stdout, stderr);
+
+
+//int fgetc(FILE* file) {  // TODO fix to not miss first character.
+//    if (file != stdin) {
+//        return EOF;
+//    }
+//
+//    (void) file;
+//    return c2fj_getc();
+//}
+
+int fputc(int c, FILE* file) {
+    if (file != stdout && file != stderr) {
+        return EOF;
+    }
+
+    c2fj_putc(c);
+    return c;
+}
+
+
 __attribute__((naked)) void _start(void) {
     asm volatile ("la sp, _stack_end - 8":::"memory");
-    _sbrk((int32_t)&_heap_start - (int32_t)_sbrk(0));
+    _sbrk((int32_t)&__heap_start - (int32_t)_sbrk(0));
 
     int status = main();
 
