@@ -26,11 +26,13 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
 
 @pytest.mark.parametrize("directory_name", [
     "primes",
-    "sanity",
-    "hello_world",
-    "hello_math",
-    "hello_input",
+    "print_alice",
+    "hello_float",
     "hello_input_number",
+    "hello_input",
+    "hello_math",
+    "hello_world",
+    "sanity",
 ])
 def test_c2fj_c_file(directory_name: str) -> None:
     directory = PROGRAMS_DIR / directory_name
@@ -38,13 +40,13 @@ def test_c2fj_c_file(directory_name: str) -> None:
 
 
 @pytest.mark.parametrize("directory_name", [
-    "multiple_files",
     "riscv_ops__all_c_syscalls",
+    "multiple_files",
+    "riscv_ops__rv32m",
     "riscv_ops__alu",
     "riscv_ops__alu_imm",
     "riscv_ops__jumps",
     "riscv_ops__memory",
-    "riscv_ops__rv32m",
 ])
 def test_c2fj_makefile(directory_name: str):
     directory = PROGRAMS_DIR / directory_name

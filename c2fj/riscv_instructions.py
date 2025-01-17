@@ -272,7 +272,6 @@ def jal_op(macro_name: str, op: int, addr: int) -> str:
         elif imm == JAL_READ_IMMEDIATE:
             return f'    .syscall.read_byte {register_name(rd)}\n'
         elif imm == JAL_EXIT_IMMEDIATE:
-            pc_changed = True
             return f'    .syscall.exit {register_name(rd)}\n'
         elif imm == JAL_SBRK_IMMEDIATE:
             return f'    .syscall.sbrk {register_name(rd)}\n'

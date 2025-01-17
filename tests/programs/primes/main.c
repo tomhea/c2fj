@@ -30,5 +30,6 @@ int main() {
         }
     }
 
+    free(non_prime);
     return 0;
 }
