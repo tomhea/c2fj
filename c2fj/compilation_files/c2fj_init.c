@@ -14,39 +14,39 @@ extern void __libc_fini_array(void);
 extern int main();
 
 
-caddr_t _sbrk(int incr) {
+caddr_t sbrk(int incr) {
     asm volatile ("jal %0, .+14" : "+r"(incr)::"memory");
     return (caddr_t) incr;  // The fj-sbrk returns the previous address in the same register.
 }
 
-void _exit(int status) {
+void exit(int status) {
     asm volatile ("jal %0, .+10" ::"r"(status):"memory");
     __builtin_unreachable();
 }
 
-int _close(int file) {
+int close(int file) {
     return -1;
 }
 
-int _fstat(int file, struct stat *st) {
+int fstat(int file, struct stat *st) {
     st->st_mode = S_IFCHR;
 
     return 0;
 }
 
-int _isatty(int file) {
+int isatty(int file) {
     return 1;
 }
 
-int _lseek(int file, int ptr, int dir) {
+int lseek(int file, int ptr, int dir) {
     return 0;
 }
 
-void _kill(int pid, int sig) {
+void kill(int pid, int sig) {
     return;
 }
 
-int _getpid(void) {
+int getpid(void) {
     return -1;
 }
 
@@ -120,13 +120,13 @@ int fputc(int c, FILE* file) {
 __attribute__((naked)) void _start(void) {
     asm volatile ("la sp, _stack_end - 8":::"memory");
     asm volatile ("la gp, _sdata + 0x800":::"memory");
-    _sbrk((int32_t)&__heap_start - (int32_t)_sbrk(0));
+    sbrk((int32_t)&__heap_start - (int32_t)sbrk(0));
 
     __libc_init_array();
     int status = main();
 
     __libc_fini_array();
-    _exit(status);
+    exit(status);
 
     while (1);
 }

@@ -109,10 +109,10 @@ You can also specify your own linker script. It should contain the following:
 First your C files are being compile to a RiscV elf.  
 The compilation is done with [picolibc](https://github.com/picolibc/picolibc), and the project provides it any of the function implementation needed, in order for it to support the next phase of fj-compilation.
 
-For example, look at `_exit` ([c2fj_init.c](c2fj/compilation_files/c2fj_init.c)):
+For example, look at `exit` ([c2fj_init.c](c2fj/compilation_files/c2fj_init.c)):
 
 ```c
-void _exit(int status) {
+void exit(int status) {
     asm volatile ("jal %0, .+10" ::"r"(status):"memory");
     __builtin_unreachable();
 }
@@ -134,7 +134,7 @@ def exit src_register {
 ```
 
 You can think of it like this: The C->RiscV compilation compiles the syscalls to a special (invalid) RiscV op, that gets parsed and further compiled into the fj implementation of the "requested syscall".
-The supported syscalls can be found in [c2fj_init.c](c2fj/compilation_files/c2fj_init.c), and they contain `_getc`, `_putc`, `_exit`, `_sbrk`.
+The supported syscalls can be found in [c2fj_init.c](c2fj/compilation_files/c2fj_init.c), and they contain `_getc`, `_putc`, `exit`, `sbrk`.
 
 Every other opcode (Let's follow `addi x10, x11, 7` for example), will be compiled into itself.
 

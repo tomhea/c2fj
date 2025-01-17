@@ -5,14 +5,14 @@
 
 
 #define PRINT_A2 "jal a2, .+22\n"
-extern caddr_t _sbrk(int incr);
-extern int _close(int file);
-extern int _fstat(int file, struct stat *st);
-extern int _isatty(int file);
-extern int _lseek(int file, int ptr, int dir);
-extern void _kill(int pid, int sig);
-extern int _getpid(void);
-extern void _exit(int status);
+extern caddr_t sbrk(int incr);
+extern int close(int file);
+extern int fstat(int file, struct stat *st);
+extern int isatty(int file);
+extern int lseek(int file, int ptr, int dir);
+extern void kill(int pid, int sig);
+extern int getpid(void);
+extern void exit(int status);
 
 extern int write(int file, const char *ptr, int len);
 extern int puts(const char *str);
@@ -55,24 +55,24 @@ int main() {
 
     c2fj_print_char('\n');
 
-    uint32_t orig_sbrk = (uint32_t)_sbrk(0);
-    _sbrk(0xfffff124 - orig_sbrk);
-    uint32_t new_sbrk = (uint32_t)_sbrk(0);
-    _sbrk(orig_sbrk - new_sbrk);
+    uint32_t orig_sbrk = (uint32_t)sbrk(0);
+    sbrk(0xfffff124 - orig_sbrk);
+    uint32_t new_sbrk = (uint32_t)sbrk(0);
+    sbrk(orig_sbrk - new_sbrk);
     c2fj_print_register(new_sbrk);
-    c2fj_print_register((uint32_t)_sbrk(0) - orig_sbrk);
+    c2fj_print_register((uint32_t)sbrk(0) - orig_sbrk);
 
-    c2fj_print_register(_close(7));
+    c2fj_print_register(close(7));
 
     struct stat st;
     st.st_mode = S_IFDIR;
-    c2fj_print_register(_fstat(7, &st));
+    c2fj_print_register(fstat(7, &st));
     c2fj_print_register((uint32_t)st.st_mode - (uint32_t)(S_IFCHR));
 
-    c2fj_print_register(_isatty(7));
-    c2fj_print_register(_lseek(1, 2, 3));
-    _kill(131, 9);
-    c2fj_print_register(_getpid());
+    c2fj_print_register(isatty(7));
+    c2fj_print_register(lseek(1, 2, 3));
+    kill(131, 9);
+    c2fj_print_register(getpid());
 
     c2fj_print_char('\n');
 
@@ -154,6 +154,6 @@ int main() {
     _putc(_getc(stdin), stdout);  // read & print newline
     c2fj_print_char('\n');
 
-    _exit(7);
+    exit(7);
     return 0;
 }
