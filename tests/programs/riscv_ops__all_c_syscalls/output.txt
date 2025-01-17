@@ -48,4 +48,20 @@ l! That's me
 
 Value of register: 0x4
 
+abcAB
+Value of register: 0x61
+Value of register: 0x62
+Value of register: 0x63
+Value of register: 0x41
+Value of register: 0x42
+
+bcAB
+Value of register: 0xFFFFFFFF
+Value of register: 0x62
+Value of register: 0x63
+Value of register: 0x41
+Value of register: 0x42
+
+ABCR
+
 Program exited with exit code 0x7.
