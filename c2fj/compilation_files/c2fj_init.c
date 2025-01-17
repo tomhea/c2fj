@@ -6,10 +6,12 @@
 #include "c2fj_syscall.h"
 
 
-int main();
-
 extern uint32_t _stack_end;
+extern uint32_t _sdata;
 extern uint32_t __heap_start;
+extern void __libc_init_array(void);
+extern void __libc_fini_array(void);
+extern int main();
 
 
 caddr_t _sbrk(int incr) {
@@ -128,10 +130,13 @@ int fputc(int c, FILE* file) {
 
 __attribute__((naked)) void _start(void) {
     asm volatile ("la sp, _stack_end - 8":::"memory");
+    asm volatile ("la gp, _sdata + 0x800":::"memory");
     _sbrk((int32_t)&__heap_start - (int32_t)_sbrk(0));
 
+    __libc_init_array();
     int status = main();
 
+    __libc_fini_array();
     _exit(status);
 
     while (1);
