@@ -3,7 +3,9 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/c2fj)](https://pypi.org/project/c2fj/)
 
 # c2fj
-Compiling C --> RiscV --> Flipjump --> .fjm
+Compiling C --> RiscV --> [Flipjump](https://github.com/tomhea/flip-jump) --> .fjm
+
+This compiler is a proof that any program can be compiled into a bunch of `NOT` operations. Read more about FlipJump: [Github](https://github.com/tomhea/flip-jump), [esolangs](https://esolangs.org/wiki/FlipJump).
 
 An example program, [primes/main.c](tests/programs/primes/main.c):
 ```c
