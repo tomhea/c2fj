@@ -63,12 +63,10 @@ int write(int file, const char *ptr, int len) {
     return len;
 }
 
-int puts(const char *str) {
-    int len = strlen(str);
-    if (write(1, str, len) != len) {
-        return -1;
+int puts(const char* str) {
+    for (char ch = *str; ch; ch = *(++str)) {
+        c2fj_putc(ch);
     }
-
     c2fj_putc('\n');
     return 0;
 }

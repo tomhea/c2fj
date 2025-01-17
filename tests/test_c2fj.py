@@ -25,6 +25,7 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
 
 
 @pytest.mark.parametrize("directory_name", [
+    "print_alice",
     "primes",
     "sanity",
     "hello_world",
