@@ -239,7 +239,7 @@ segment .JMP + 0x00000000/4*dw
 ...
 ;.ADDR_00000144
 ```
-The `0x144` address is at fixed offset from the global `.JMP` address, thus jumping to `0x144` became as easy as jumping to `.JMP + 0x144*dw` (as `dw` is the length of one fj opcode, in bits).
+The `0x144` address is at fixed offset from the global `.JMP` address, thus jumping to riscv memory address `0x144` became as easy as jumping to fj-address `.JMP + 0x144*dw` (as `dw` is the length of one fj opcode, in bits).
 
 ## Tests
 

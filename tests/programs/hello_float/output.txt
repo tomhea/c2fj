@@ -1,0 +1,2 @@
+1.23 * 4.56 == 5.60880
+Program exited with exit code 0x0.

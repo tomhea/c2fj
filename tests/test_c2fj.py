@@ -29,6 +29,7 @@ def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path
     "sanity",
     "hello_world",
     "hello_math",
+    "hello_float",
     "hello_input",
     "hello_input_number",
 ])
