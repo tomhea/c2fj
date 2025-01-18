@@ -5,7 +5,7 @@
 # c2fj
 Compiling C --> RiscV --> [Flipjump](https://github.com/tomhea/flip-jump) --> .fjm
 
-This compiler is a proof that any program can be compiled into a bunch of `NOT` operations. Read more about FlipJump: [Github](https://github.com/tomhea/flip-jump), [esolangs](https://esolangs.org/wiki/FlipJump).
+This compiler is a proof that any program can be compiled into a bunch of `NOT` operations. Read more about FlipJump: [Github](https://github.com/tomhea/flip-jump), [Esolangs](https://esolangs.org/wiki/FlipJump), [Learn FlipJump](https://github.com/tomhea/flip-jump/wiki/Learn-FlipJump).
 
 An example program, [primes/main.c](tests/programs/primes/main.c):
 ```c
@@ -251,4 +251,5 @@ This package is tested on linux and python 3.13.
 ## Related projects
 - [bf2fj](https://github.com/tomhea/bf2fj) - Brainfuck to FlipJump compiler.
 - [FlipJump](https://github.com/tomhea/flip-jump) - The flipjump language macro assembler, standard library, and interpreter.
+  - [Learn low-level FlipJump](https://github.com/tomhea/flip-jump/wiki/Learn-FlipJump)
 - [fji-cpp](https://github.com/tomhea/fji-cpp) - Faster C++ interpreter for FlipJump.
