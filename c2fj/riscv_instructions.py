@@ -1,4 +1,4 @@
-from typing import TextIO
+from typing import TextIO, Tuple
 
 RV_LUI = 0b0110111
 RV_AUIPC = 0b0010111
@@ -85,8 +85,6 @@ JAL_DEBUG_P_START_IMMEDIATE = 1002
 JAL_DEBUG_P_END_IMMEDIATE = 2022
 JAL_PRINT_CHAR_START_IMMEDIATE = 3002
 JAL_PRINT_CHAR_END_IMMEDIATE = 4022
-
-global pc_changed
 
 
 class InvalidOpcode(ValueError):
@@ -194,9 +192,6 @@ def jalr_op(op: int, addr: int) -> str:
     rs1 = (op >> 15) & 0x1f
     rd = (op >> 7) & 0x1f
 
-    global pc_changed
-    pc_changed = True
-
     return f'    .jalr {zero_register(rd)}, {register_name(rd)}, {mov_to_rs1(rs1)}, {fj_hex(imm)}, {addr}\n'
 
 
@@ -223,13 +218,10 @@ def b_type(macro_name: str, op: int, addr: int) -> str:
     rs1 = (op >> 15) & 0x1f
     rs2 = (op >> 20) & 0x1f
 
-    global pc_changed
-    pc_changed = True
-
     return f'    .{macro_name} {mov_to_rs1(rs1)}, {xor_to_rs2(rs2)}, {fj_hex(imm)}, {addr}\n'
 
 
-def u_type(op: int) -> [int, int]:
+def u_type(op: int) -> Tuple[int, int]:
     imm = sign_extend(op & 0xfffff000, 32)
     rd = (op >> 7) & 0x1f
     return imm, rd
@@ -245,7 +237,10 @@ def auipc_op(op: int, addr: int) -> str:
     return f'    .auipc {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}, {addr}\n'
 
 
-def jal_op(macro_name: str, op: int, addr: int) -> str:
+def jal_op(macro_name: str, op: int, addr: int) -> Tuple[str, bool]:
+    """
+    @return: (the op string, whether the op manually changes the pc)
+    """
     imm20 = op >> 31
     imm10_1 = (op >> 21) & 0x3ff
     imm11 = (op >> 20) & 0x1
@@ -255,35 +250,32 @@ def jal_op(macro_name: str, op: int, addr: int) -> str:
 
     rd = (op >> 7) & 0x1f
 
-    global pc_changed
-
     if imm % 4 == 2:
         if JAL_DEBUG_P_START_IMMEDIATE <= imm <= JAL_DEBUG_P_END_IMMEDIATE:
             p_imm = (imm - JAL_DEBUG_P_START_IMMEDIATE) // 4
             imm_str = f'"debug_p{p_imm:02X}\\n"'
-            return f'    .syscall.print_string {imm_str}\n'
+            return f'    .syscall.print_string {imm_str}\n', False
 
         if JAL_PRINT_CHAR_START_IMMEDIATE <= imm <= JAL_PRINT_CHAR_END_IMMEDIATE:
             char_imm = (imm - JAL_PRINT_CHAR_START_IMMEDIATE) // 4
-            return f'    .syscall.print_string {char_imm}\n'
+            return f'    .syscall.print_string {char_imm}\n', False
 
         if imm == JAL_WRITE_IMMEDIATE:
-            return f'    .syscall.write_byte {register_name(rd)}\n'
+            return f'    .syscall.write_byte {register_name(rd)}\n', False
         elif imm == JAL_READ_IMMEDIATE:
-            return f'    .syscall.read_byte {register_name(rd)}\n'
+            return f'    .syscall.read_byte {register_name(rd)}\n', False
         elif imm == JAL_EXIT_IMMEDIATE:
-            return f'    .syscall.exit {register_name(rd)}\n'
+            return f'    .syscall.exit {register_name(rd)}\n', False
         elif imm == JAL_SBRK_IMMEDIATE:
-            return f'    .syscall.sbrk {register_name(rd)}\n'
+            return f'    .syscall.sbrk {register_name(rd)}\n', False
         elif imm == JAL_DEBUG_REGISTERS_IMMEDIATE:
-            return f'    .syscall.debug_print_regs\n'
+            return f'    .syscall.debug_print_regs\n', False
         elif imm == JAL_DEBUG_PRINT_REGISTER_IMMEDIATE:
-            return f'    .syscall.debug_print_reg {register_name(rd)}\n'
+            return f'    .syscall.debug_print_reg {register_name(rd)}\n', False
         else:
             raise InvalidOpcode(f"Bad imm offset in j-type op: 0x{op:08x} (address 0x{addr:08x}).")
 
-    pc_changed = True
-    return f'    .{macro_name} {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}, {addr}\n'
+    return f'    .{macro_name} {zero_register(rd)}, {register_name(rd)}, {fj_hex(imm)}, {addr}\n', True
 
 
 def write_branch_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct7: int) -> None:
@@ -394,9 +386,11 @@ def write_rv32m_op(ops_file: TextIO, full_op: int, addr: int, funct3: int, funct
         ops_file.write(r_type('rem', full_op, dst_is_rs1=True))
     elif funct3 == RV_REMU:
         ops_file.write(r_type('remu', full_op, dst_is_rs1=True))
+    else:
+        raise InvalidOpcode(f"bad funct3 at rv32m op: 0x{full_op:08x} (address 0x{addr:08x}).")
 
 
-def write_op_safe(ops_file: TextIO, full_op: int, addr: int, error_on_unimplemented_op: bool):
+def write_op_safe(ops_file: TextIO, full_op: int, addr: int, error_on_unimplemented_op: bool) -> None:
     try:
         write_op(ops_file, full_op, addr)
     except InvalidOpcode:
@@ -410,7 +404,6 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
     funct3 = (full_op >> 12) & 7
     funct7 = full_op >> 25
 
-    global pc_changed
     pc_changed = False
 
     if opcode == RV_LUI:
@@ -418,15 +411,18 @@ def write_op(ops_file: TextIO, full_op: int, addr: int) -> None:
     elif opcode == RV_AUIPC:
         ops_file.write(auipc_op(full_op, addr))
     elif opcode == RV_JAL:
-        ops_file.write(jal_op('jal', full_op, addr))
+        op_string, pc_changed = jal_op('jal', full_op, addr)
+        ops_file.write(op_string)
     elif opcode == RV_JALR:
         if funct3 != 0:
             raise InvalidOpcode(f"bad funct3 at jalr op: 0x{full_op:08x} (address 0x{addr:08x}).")
         else:
             ops_file.write(jalr_op(full_op, addr))
+            pc_changed = True
 
     elif opcode == RV_B:
         write_branch_op(ops_file, full_op, addr, funct3, funct7)
+        pc_changed = True
     elif opcode == RV_L:
         write_load_op(ops_file, full_op, addr, funct3, funct7)
     elif opcode == RV_S:

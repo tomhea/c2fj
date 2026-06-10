@@ -1,11 +1,8 @@
 GCC := riscv64-unknown-elf-gcc
 GCC_FLAGS := -O3
 
-SOURCES := $(C2FJ_SOURCES) $(SINGLE_C_FILE)
-OBJECTS := $(SOURCES:.c=.o)
-
 all: |
-	$(GCC) $(C2FJ_GCC_OPTIONS) $(GCC_FLAGS) $(SOURCES) -I $(C2FJ_INCLUDE_DIRS) -T $(C2FJ_LINKER_SCRIPT) -o $(ELF_OUT_PATH)
+	$(GCC) $(C2FJ_GCC_OPTIONS) $(GCC_FLAGS) "$(C2FJ_SOURCES)" "$(SINGLE_C_FILE)" -I "$(C2FJ_INCLUDE_DIRS)" -T "$(C2FJ_LINKER_SCRIPT)" -o "$(ELF_OUT_PATH)"
 
 clean:
 	rm -r build 2>/dev/null || true

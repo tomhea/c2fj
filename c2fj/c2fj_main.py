@@ -1,7 +1,7 @@
 import argparse
 import contextlib
-import os
 import shutil
+import subprocess
 from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -26,6 +26,10 @@ C_EXTENSIONS = ['.c', '.h', '.cc']
 ELF_EXTENSIONS = ['.elf', '.out']
 
 
+class MakeFailedError(RuntimeError):
+    """Raised when the c->riscv make compilation fails."""
+
+
 class BuildNames(Enum):
     ELF = 'main.elf'
     OPS_FJ = 'ops.fj'
@@ -42,16 +46,21 @@ def compile_c_to_riscv(file: Path, build_path: Path) -> None:
         return
 
     with PrintTimer('  make c->riscv:   '):
+        make_vars = dict(C2FJ_MAKE_VARS)
         if file.suffix in C_EXTENSIONS:
-            C2FJ_MAKE_VARS['SINGLE_C_FILE'] = str(file)
+            make_vars['SINGLE_C_FILE'] = str(file)
             makefile = COMPILATION_FILES_DIR / "Makefile_single_c_generic"
         else:
             makefile = file
 
-        C2FJ_MAKE_VARS['ELF_OUT_PATH'] = str(build_path)
+        make_vars['ELF_OUT_PATH'] = str(build_path)
 
-        make_vars_string = ' '.join(f'{k}="{v}"' for k, v in C2FJ_MAKE_VARS.items())
-        assert 0 == os.system(f"make -s -f {makefile} -C {makefile.parent} {make_vars_string}"), "Make c->riscv failed."
+        make_command = ['make', '-s', '-f', str(makefile), '-C', str(makefile.parent),
+                        *(f'{name}={value}' for name, value in make_vars.items())]
+        try:
+            subprocess.run(make_command, check=True)
+        except (OSError, subprocess.CalledProcessError) as error:
+            raise MakeFailedError("Make c->riscv failed.") from error
 
 
 def get_fj_files_in_order(build_dir: Path) -> List[Path]:
@@ -71,13 +80,14 @@ def unify_fj_files(ordered_fj_files: List[Path], build_path: Path) -> None:
                 unified.write(f'// END {fj_file.name}\n\n\n\n')
 
 
-def compile_riscv_to_fj(build_dir: Path, unify_fj: bool = False) -> None:
+def compile_riscv_to_fj(build_dir: Path, unify_fj: bool = False, error_on_unimplemented_op: bool = False) -> None:
     with PrintTimer('  comp riscv->fj:  '):
         create_fj_files_from_riscv_elf(
             elf_path=build_dir / BuildNames.ELF.value,
             mem_path=build_dir / BuildNames.MEMORY_FJ.value,
             jmp_path=build_dir / BuildNames.JUMPS_FJ.value,
             ops_path=build_dir / BuildNames.OPS_FJ.value,
+            error_on_unimplemented_op=error_on_unimplemented_op,
         )
 
     if unify_fj:
@@ -113,13 +123,19 @@ class FinishCompilingAfter(Enum):
 
 def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = False,
          finish_compiling_after: FinishCompilingAfter = FinishCompilingAfter.RUN,
-         breakpoint_addresses: Optional[List[int]] = None, single_step: bool = False) -> None:
+         breakpoint_addresses: Optional[List[int]] = None, single_step: bool = False,
+         error_on_unimplemented_op: bool = False) -> None:
+    if build_dir is None and finish_compiling_after != FinishCompilingAfter.RUN:
+        raise ValueError(f"build_dir must be specified when finishing after "
+                         f"'{finish_compiling_after.value}', otherwise the build outputs are "
+                         f"written to a temporary directory and deleted before you can use them.")
+
     with get_build_directory(build_dir) as build_dir:
         compile_c_to_riscv(file, build_dir / BuildNames.ELF.value)
         if finish_compiling_after == FinishCompilingAfter.ELF:
             return
 
-        compile_riscv_to_fj(build_dir, unify_fj)
+        compile_riscv_to_fj(build_dir, unify_fj, error_on_unimplemented_op)
         if finish_compiling_after == FinishCompilingAfter.FJ:
             return
 
@@ -161,6 +177,8 @@ def main() -> None:
                                  type=lambda s: int(s, 0), help='breakpoint addresses')
     argument_parser.add_argument('--single-step', '-s', action='store_true',
                                  help='Stop at the start of every riscv opcode')
+    argument_parser.add_argument('--error-on-unimplemented-op', '-e', action='store_true',
+                                 help='Raise an error instead of emitting a comment for unimplemented riscv opcodes')
     args = argument_parser.parse_args()
 
     file = Path(args.file)
@@ -168,7 +186,7 @@ def main() -> None:
         raise FileNotFoundError(f"This isn't a file: {file}")
 
     c2fj(file.absolute(), args.build_dir, args.unify_fj, FinishCompilingAfter(args.finish_after),
-         args.breakpoints, args.single_step)
+         args.breakpoints, args.single_step, args.error_on_unimplemented_op)
 
 
 if __name__ == '__main__':
