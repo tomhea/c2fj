@@ -91,13 +91,14 @@ def get_segment_data(segment) -> bytes:
     return segment.data()
 
 
-def write_segment(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO, segment) -> None:
+def write_segment(mem_file: TextIO, jmp_file: TextIO, ops_file: TextIO, segment,
+                  error_on_unimplemented_op: bool = False) -> None:
     virtual_address = get_virtual_start_address(segment)
     reserved_byte_size = get_reserved_byte_size(segment)
     data = get_segment_data(segment)
 
     if is_segment_executable(segment):
-        write_ops_and_jumps(ops_file, jmp_file, data, virtual_address)
+        write_ops_and_jumps(ops_file, jmp_file, data, virtual_address, error_on_unimplemented_op)
     write_memory_data(mem_file, data, virtual_address, reserved_byte_size)
 
 
@@ -122,7 +123,8 @@ def get_segments(elf: elftools.elf.elffile.ELFFile) -> Iterator:
     return elf.iter_segments()
 
 
-def create_fj_files_from_riscv_elf(elf_path: Path, mem_path: Path, jmp_path: Path, ops_path: Path) -> None:
+def create_fj_files_from_riscv_elf(elf_path: Path, mem_path: Path, jmp_path: Path, ops_path: Path,
+                                   error_on_unimplemented_op: bool = False) -> None:
     with mem_path.open('w') as mem_file, \
             jmp_path.open('w') as jmp_file, \
             ops_path.open('w') as ops_file, \
@@ -133,6 +135,6 @@ def create_fj_files_from_riscv_elf(elf_path: Path, mem_path: Path, jmp_path: Pat
 
         for segment in get_segments(elf):
             if is_loaded_to_memory(segment):
-                write_segment(mem_file, jmp_file, ops_file, segment)
+                write_segment(mem_file, jmp_file, ops_file, segment, error_on_unimplemented_op)
 
         write_file_suffixes(mem_file, jmp_file, ops_file)
