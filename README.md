@@ -56,6 +56,7 @@ Program exited with exit code 0x0.
 ```
 
 # How to install
+Requires python 3.10-3.14.
 ```
 >>> pip install c2fj
 >>> sudo apt install picolibc-riscv64-unknown-elf
@@ -63,13 +64,14 @@ Program exited with exit code 0x0.
 
 # How to use
 
-Simply `python3 c2fj.py file.c` will compile your c file into an elf, into fj files, into fjm, then run it.
+Simply `c2fj file.c` will compile your c file into an elf, into fj files, into fjm, then run it.
 
 `c2fj` supports the next flags:
 - `--breakpoints` Place a fj-breakpoint at the start of the specified riscv addresses
 - `--single-step` Place fj-breakpoints at the start of all riscv opcodes
-- `--unify_fj` Unify the generated fj files into a single file
-- `--finish-after` Stop the compilation at any step (before running, before creating fjm, etc.)
+- `--unify-fj` Unify the generated fj files into a single file
+- `--finish-after` Stop the compilation at any step (before running, before creating fjm, etc.).
+  Requires `--build-dir`, so that the build outputs won't get deleted.
 - `--build-dir` Save the builds in this directory
 
 ## What if my project is more then a single c?
@@ -243,10 +245,16 @@ segment .JMP + 0x00000000/4*dw
 ```
 The `0x144` address is at fixed offset from the global `.JMP` address, thus jumping to riscv memory address `0x144` became as easy as jumping to fj-address `.JMP + 0x144*dw` (as `dw` is the length of one fj opcode, in bits).
 
+## Known limitations
+- There is no EOF: reading input (`scanf`, `getchar`, etc.) after the input was exhausted stops the interpreter,
+  instead of returning `EOF`. Make sure your program doesn't read more input than it's given.
+- Dividing by zero stops the program with an error, instead of returning all-ones as the RiscV spec defines.
+- The `fence` ops aren't supported (they aren't needed, as the execution is single-threaded).
+
 ## Tests
 
 Simply run `pytest` to run the tests.
-This package is tested on linux and python 3.13.
+This package is tested on linux, with python 3.10-3.14.
 
 ## Related projects
 - [bf2fj](https://github.com/tomhea/bf2fj) - Brainfuck to FlipJump compiler.

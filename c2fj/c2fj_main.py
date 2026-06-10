@@ -1,7 +1,7 @@
 import argparse
 import contextlib
-import os
 import shutil
+import subprocess
 from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -42,16 +42,21 @@ def compile_c_to_riscv(file: Path, build_path: Path) -> None:
         return
 
     with PrintTimer('  make c->riscv:   '):
+        make_vars = dict(C2FJ_MAKE_VARS)
         if file.suffix in C_EXTENSIONS:
-            C2FJ_MAKE_VARS['SINGLE_C_FILE'] = str(file)
+            make_vars['SINGLE_C_FILE'] = str(file)
             makefile = COMPILATION_FILES_DIR / "Makefile_single_c_generic"
         else:
             makefile = file
 
-        C2FJ_MAKE_VARS['ELF_OUT_PATH'] = str(build_path)
+        make_vars['ELF_OUT_PATH'] = str(build_path)
 
-        make_vars_string = ' '.join(f'{k}="{v}"' for k, v in C2FJ_MAKE_VARS.items())
-        assert 0 == os.system(f"make -s -f {makefile} -C {makefile.parent} {make_vars_string}"), "Make c->riscv failed."
+        make_command = ['make', '-s', '-f', str(makefile), '-C', str(makefile.parent),
+                        *(f'{name}={value}' for name, value in make_vars.items())]
+        try:
+            subprocess.run(make_command, check=True)
+        except (OSError, subprocess.CalledProcessError) as error:
+            raise RuntimeError("Make c->riscv failed.") from error
 
 
 def get_fj_files_in_order(build_dir: Path) -> List[Path]:
@@ -114,6 +119,11 @@ class FinishCompilingAfter(Enum):
 def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = False,
          finish_compiling_after: FinishCompilingAfter = FinishCompilingAfter.RUN,
          breakpoint_addresses: Optional[List[int]] = None, single_step: bool = False) -> None:
+    if build_dir is None and finish_compiling_after != FinishCompilingAfter.RUN:
+        raise ValueError(f"build_dir must be specified when finishing after "
+                         f"'{finish_compiling_after.value}', otherwise the build outputs are "
+                         f"written to a temporary directory and deleted before you can use them.")
+
     with get_build_directory(build_dir) as build_dir:
         compile_c_to_riscv(file, build_dir / BuildNames.ELF.value)
         if finish_compiling_after == FinishCompilingAfter.ELF:

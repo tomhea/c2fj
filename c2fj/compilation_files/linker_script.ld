@@ -22,6 +22,7 @@ SECTIONS
 {
     .text :
     {
+        *(.text)
         *(.text.*)
         *(.rodata.*)
         _etext = .;
