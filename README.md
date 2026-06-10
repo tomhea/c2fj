@@ -86,16 +86,15 @@ C2FJ_INCLUDE_DIRS
 ELF_OUT_PATH
 ```
 
-An example Makefile:
+An example Makefile (note that the c2fj-provided paths are quoted, so they work from paths with spaces too):
 ```makefile
 GCC := riscv64-unknown-elf-gcc
 GCC_FLAGS := -O3
 
-SOURCES := $(C2FJ_SOURCES) main.c globals.c calculate_int.c
-OBJECTS := $(SOURCES:.c=.o)
+SOURCES := main.c globals.c calculate_int.c
 
 all: |
-	$(GCC) $(C2FJ_GCC_OPTIONS) $(GCC_FLAGS) $(SOURCES) -I $(C2FJ_INCLUDE_DIRS) -T $(C2FJ_LINKER_SCRIPT) -o $(ELF_OUT_PATH)
+	$(GCC) $(C2FJ_GCC_OPTIONS) $(GCC_FLAGS) "$(C2FJ_SOURCES)" $(SOURCES) -I "$(C2FJ_INCLUDE_DIRS)" -T "$(C2FJ_LINKER_SCRIPT)" -o "$(ELF_OUT_PATH)"
 
 clean:
 	rm -r build 2>/dev/null || true

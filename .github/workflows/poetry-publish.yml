@@ -1,5 +1,5 @@
 # This workflow uploads the new c2fj python package to pypi, every time a new release is created.
-# The tests run first, and publishing only happens if they pass.
+# The tests run first (the full tests.yml matrix), and publishing only happens if they pass.
 
 name: Upload python package
 on:
@@ -11,23 +11,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
-        with:
-          python-version: '3.13'
-      - name: Install python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .[tests]
-      - name: Install compilation dependencies
-        run: |
-          sudo apt-get install -y picolibc-riscv64-unknown-elf
-      - name: Test pytest
-        run: |
-          pytest -n auto -vv
+    uses: ./.github/workflows/tests.yml
 
   publish:
     runs-on: ubuntu-latest

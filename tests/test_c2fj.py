@@ -6,9 +6,16 @@ import pytest
 from flipjump import run_test_output
 from flipjump.utils.constants import IO_BYTES_ENCODING
 
-from c2fj.c2fj_main import c2fj, compile_c_to_riscv, C2FJ_MAKE_VARS, FinishCompilingAfter, BuildNames
+from c2fj.c2fj_main import (c2fj, compile_c_to_riscv, C2FJ_MAKE_VARS, FinishCompilingAfter, BuildNames,
+                            MakeFailedError)
 
 PROGRAMS_DIR = Path(__file__).parent / "programs"
+
+
+def create_uncompilable_c_file(directory: Path) -> Path:
+    bad_c_file = directory / "bad.c"
+    bad_c_file.write_text("int main( { this is not C ")
+    return bad_c_file
 
 
 def run_c2fj_test(file: Path, fixed_input_file: Path, expected_output_file: Path) -> None:
@@ -83,16 +90,14 @@ def test_c2fj_finish_after_requires_build_dir(finish_compiling_after: FinishComp
 
 
 def test_c2fj_failing_compilation_raises(tmp_path: Path) -> None:
-    bad_c_file = tmp_path / "bad.c"
-    bad_c_file.write_text("int main( { this is not C ")
-    with pytest.raises(RuntimeError):
+    bad_c_file = create_uncompilable_c_file(tmp_path)
+    with pytest.raises(MakeFailedError):
         compile_c_to_riscv(bad_c_file, tmp_path / "main.elf")
 
 
 def test_c2fj_make_vars_are_not_mutated(tmp_path: Path) -> None:
-    bad_c_file = tmp_path / "bad.c"
-    bad_c_file.write_text("int main( { this is not C ")
-    with pytest.raises(RuntimeError):
+    bad_c_file = create_uncompilable_c_file(tmp_path)
+    with pytest.raises(MakeFailedError):
         compile_c_to_riscv(bad_c_file, tmp_path / "main.elf")
 
     assert 'SINGLE_C_FILE' not in C2FJ_MAKE_VARS

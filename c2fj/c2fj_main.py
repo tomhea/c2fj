@@ -26,6 +26,10 @@ C_EXTENSIONS = ['.c', '.h', '.cc']
 ELF_EXTENSIONS = ['.elf', '.out']
 
 
+class MakeFailedError(RuntimeError):
+    """Raised when the c->riscv make compilation fails."""
+
+
 class BuildNames(Enum):
     ELF = 'main.elf'
     OPS_FJ = 'ops.fj'
@@ -56,7 +60,7 @@ def compile_c_to_riscv(file: Path, build_path: Path) -> None:
         try:
             subprocess.run(make_command, check=True)
         except (OSError, subprocess.CalledProcessError) as error:
-            raise RuntimeError("Make c->riscv failed.") from error
+            raise MakeFailedError("Make c->riscv failed.") from error
 
 
 def get_fj_files_in_order(build_dir: Path) -> List[Path]:
@@ -76,13 +80,14 @@ def unify_fj_files(ordered_fj_files: List[Path], build_path: Path) -> None:
                 unified.write(f'// END {fj_file.name}\n\n\n\n')
 
 
-def compile_riscv_to_fj(build_dir: Path, unify_fj: bool = False) -> None:
+def compile_riscv_to_fj(build_dir: Path, unify_fj: bool = False, error_on_unimplemented_op: bool = False) -> None:
     with PrintTimer('  comp riscv->fj:  '):
         create_fj_files_from_riscv_elf(
             elf_path=build_dir / BuildNames.ELF.value,
             mem_path=build_dir / BuildNames.MEMORY_FJ.value,
             jmp_path=build_dir / BuildNames.JUMPS_FJ.value,
             ops_path=build_dir / BuildNames.OPS_FJ.value,
+            error_on_unimplemented_op=error_on_unimplemented_op,
         )
 
     if unify_fj:
@@ -118,7 +123,8 @@ class FinishCompilingAfter(Enum):
 
 def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = False,
          finish_compiling_after: FinishCompilingAfter = FinishCompilingAfter.RUN,
-         breakpoint_addresses: Optional[List[int]] = None, single_step: bool = False) -> None:
+         breakpoint_addresses: Optional[List[int]] = None, single_step: bool = False,
+         error_on_unimplemented_op: bool = False) -> None:
     if build_dir is None and finish_compiling_after != FinishCompilingAfter.RUN:
         raise ValueError(f"build_dir must be specified when finishing after "
                          f"'{finish_compiling_after.value}', otherwise the build outputs are "
@@ -129,7 +135,7 @@ def c2fj(file: Path, build_dir: Union[None, str, Path] = None, unify_fj: bool = 
         if finish_compiling_after == FinishCompilingAfter.ELF:
             return
 
-        compile_riscv_to_fj(build_dir, unify_fj)
+        compile_riscv_to_fj(build_dir, unify_fj, error_on_unimplemented_op)
         if finish_compiling_after == FinishCompilingAfter.FJ:
             return
 
