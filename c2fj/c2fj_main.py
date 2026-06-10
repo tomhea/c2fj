@@ -177,6 +177,8 @@ def main() -> None:
                                  type=lambda s: int(s, 0), help='breakpoint addresses')
     argument_parser.add_argument('--single-step', '-s', action='store_true',
                                  help='Stop at the start of every riscv opcode')
+    argument_parser.add_argument('--error-on-unimplemented-op', '-e', action='store_true',
+                                 help='Raise an error instead of emitting a comment for unimplemented riscv opcodes')
     args = argument_parser.parse_args()
 
     file = Path(args.file)
@@ -184,7 +186,7 @@ def main() -> None:
         raise FileNotFoundError(f"This isn't a file: {file}")
 
     c2fj(file.absolute(), args.build_dir, args.unify_fj, FinishCompilingAfter(args.finish_after),
-         args.breakpoints, args.single_step)
+         args.breakpoints, args.single_step, args.error_on_unimplemented_op)
 
 
 if __name__ == '__main__':
