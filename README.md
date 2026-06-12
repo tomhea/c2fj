@@ -5,7 +5,9 @@
 # c2fj
 Compiling C --> RiscV --> [Flipjump](https://github.com/tomhea/flip-jump) --> .fjm
 
-This compiler is a proof that any program can be compiled into a bunch of `NOT` operations. Read more about FlipJump: [Github](https://github.com/tomhea/flip-jump), [Esolangs](https://esolangs.org/wiki/FlipJump), [Learn FlipJump](https://github.com/tomhea/flip-jump/wiki/Learn-FlipJump).
+This compiler is proof that any program can be compiled into a bunch of `NOT` operations. Read more about FlipJump: [Github](https://github.com/tomhea/flip-jump), [Esolangs](https://esolangs.org/wiki/FlipJump), [**FlipJump Docs**](https://fjdocs.tomhe.app/).
+
+Try It Online in the [FlipJump IDE](https://fj.tomhe.app/).
 
 An example program, [primes/main.c](tests/programs/primes/main.c):
 ```c
@@ -56,7 +58,7 @@ Program exited with exit code 0x0.
 ```
 
 # How to install
-Requires python 3.10-3.14.
+Requires Python 3.10-3.14.
 ```
 >>> pip install c2fj
 >>> sudo apt install picolibc-riscv64-unknown-elf
@@ -64,19 +66,19 @@ Requires python 3.10-3.14.
 
 # How to use
 
-Simply `c2fj file.c` will compile your c file into an elf, into fj files, into fjm, then run it.
+Simply `c2fj file.c` will compile your C file into an ELF, into fj files, into fjm, then run it.
 
-`c2fj` supports the next flags:
-- `--breakpoints` Place a fj-breakpoint at the start of the specified riscv addresses
+`c2fj` supports the following flags:
+- `--breakpoints` Place a fj-breakpoint at the start of the specified RISCV addresses
 - `--single-step` Place fj-breakpoints at the start of all riscv opcodes
 - `--unify-fj` Unify the generated fj files into a single file
 - `--finish-after` Stop the compilation at any step (before running, before creating fjm, etc.).
   Requires `--build-dir`, so that the build outputs won't get deleted.
 - `--build-dir` Save the builds in this directory
 
-## What if my project is more then a single c?
+## What if my project is more than a single c?
 
-We support specifying a `Makefile` path, instead of the c file!  
+We support specifying a `Makefile` path, instead of the C file!  
 Your Makefile will have to rely on some constants that `c2fj` will fill:
 ```c
 C2FJ_GCC_OPTIONS
@@ -109,8 +111,8 @@ You can also specify your own linker script. It should contain the following:
 - `__heap_start` (start of the heap)
 
 ## How Does It Work?
-First your C files are being compile to a RiscV elf.  
-The compilation is done with [picolibc](https://github.com/picolibc/picolibc), and the project provides it any of the function implementation needed, in order for it to support the next phase of fj-compilation.
+First your C files are being compiled to a RiscV elf.  
+The compilation is done with [picolibc](https://github.com/picolibc/picolibc), and the project provides any needed function implementations to support the next phase of fj-compilation.
 
 For example, look at `exit` ([c2fj_init.c](c2fj/compilation_files/c2fj_init.c)):
 
@@ -148,11 +150,11 @@ elif opcode == RV_ALU_IMM:
         ops_file.write(i_type('addi', full_op))
 ```
 
-Then the `riscv.addi` macro is being used. The riscv ops macros are space-optimized. They are so much optimized, that each takes `30-40` fj-ops in space.  
-That is by design. The space optimization allows this project to handle very large c code bases, and still being able to compile it without any problem.
+Then the `riscv.addi` macro is being used. The riscv ops macros are space-optimized. They are so optimized that each takes `30-40` fj-ops in space.  
+That is by design. The space optimization allows this project to handle very large C codebases and still compile them without any problems.
 That means that the compilation time doesn't really depend on the size of your codebase.
 
-The way it works, is that each opcode is implemented once in the `riscv.start` macro. 
+The way it works is that each opcode is implemented once in the `riscv.start` macro. 
 For example: 
 ```python
 do_add:
@@ -213,27 +215,27 @@ And the `addi x10, x11, 7` opcode will be compiled into `riscv.addi mov_rs1_to_x
 
 So when the `1st` line is executed, the `mov_x11_to_rs1` code will be executed, and it will return to the start of the `2nd` line.  
 Note that most of the macros use the global fj variables `rs1, rs2, rd` (part of the `riscv` namespace).  
-Then, in the second line `rs2` is being zeroed.  
-The third line xors the given immediate (`7`) to `rs2`, and the forth line does the actual addition (by jumping to `do_op` which is `do_add` in our case).  
+Then, in the second line, `rs2` is being zeroed.  
+The third line xors the given immediate (`7`) to `rs2`, and the fourth line does the actual addition (by jumping to `do_op` which is `do_add` in our case).  
 The fifth line will move the result (which `do_add` puts in `rs1`) to `x10`, using the given `mov_rs1_to_x10` argument.  
 Then, the macro will finish.
 
-If you want to understand it better, feel free to _jump_ into the FlipJump and read how things work in the bits and bytes level.
+If you want to understand it better, feel free to _jump_ into the FlipJump and read how things work at the bits and bytes level.
 
-The next phase uses the `flipjump` python package to compile the given `.fj` files into the compiles `.fjm` file (which is segments of data, and by data I mean bits of flips and jumps).  
-The last phase, running the `.fjm` file, uses the `flipjump` package to interpret the `.fjm` file, and allows to debug it too.
+The next phase uses the `flipjump` Python package to compile the given `.fj` files into the compiled `.fjm` file (which is segments of data, and by data I mean bits of flips and jumps).  
+The last phase, running the `.fjm` file, uses the `flipjump` package to interpret the `.fjm` file, and allows you to debug it too.
 
-#### Jumps Tables, Memory?
-In the previous section I talked about the `ops.fj` file that was created in the compilation process, but there are two more files that gets created in that process too.
+#### Jump Tables, Memory?
+In the previous section, I talked about the `ops.fj` file that was created in the compilation process, but there are two more files that gets created in that process too.
 
 ##### `mem.fj`:
-The entire loadable memory of the compiled elf is being loaded into flipjump using this file. It contains all the loadable bytes of the memory in fj `hex` variables.  
-There are no memory restrictions on it, thus the running program can read/write/execute from it freely.  
-Note that the riscv opcodes are part of the loadable memory too, and you can modify that part of memory too, and it will change, but the compiled riscv-ops themselves (in `ops.fj`) won't change.
+The entire loadable memory of the compiled ELF is being loaded into flipjump using this file. It contains all the loadable bytes of the memory in fj `hex` variables.  
+There are no memory restrictions on it; thus, the running program can read/write/execute from it freely.  
+Note that the riscv opcodes are part of the loadable memory too, and you can modify that part of memory too, and it will change, but the compiled RISC-V ops themselves (in `ops.fj`) won't change.
 
 ##### `jmp.fj`:
 That's a jump table to every runnable riscv address. That helps us in jumping ops, because the macro addresses of the ops in the `ops.fj` can't be predicted easily.  
-Think of how can you jump to address 0x144. The label `riscv.ADDR_00000144` in `ops.fj` is not in some fixed place, or something that related to `0x144`. Yet, the current;y running opcode ant to jump to address `0x144`. Then what do we do?  
+Think of how you can jump to address 0x144. The label `riscv.ADDR_00000144` in `ops.fj` is not in some fixed place, or something related to `0x144`. Yet, the currently running opcode wants to jump to address `0x144`. Then what do we do?  
 Use a jump table! It looks something like:
 ```python
 segment .JMP + 0x00000000/4*dw
@@ -242,7 +244,7 @@ segment .JMP + 0x00000000/4*dw
 ...
 ;.ADDR_00000144
 ```
-The `0x144` address is at fixed offset from the global `.JMP` address, thus jumping to riscv memory address `0x144` became as easy as jumping to fj-address `.JMP + 0x144*dw` (as `dw` is the length of one fj opcode, in bits).
+The `0x144` address is at a fixed offset from the global `.JMP` address; thus jumping to riscv memory address `0x144` became as easy as jumping to fj-address `.JMP + 0x144*dw` (as `dw` is the length of one fj opcode, in bits).
 
 ## Known limitations
 - There is no EOF: reading input (`scanf`, `getchar`, etc.) after the input was exhausted stops the interpreter,
@@ -253,7 +255,7 @@ The `0x144` address is at fixed offset from the global `.JMP` address, thus jump
 ## Tests
 
 Simply run `pytest` to run the tests.
-This package is tested on linux, with python 3.10-3.14.
+This package is tested on Linux, with Python 3.10-3.14.
 
 ## Related projects
 - [bf2fj](https://github.com/tomhea/bf2fj) - Brainfuck to FlipJump compiler.
